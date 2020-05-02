@@ -85,10 +85,10 @@ ui <- navbarPage("COVID-19 Models",
     tabPanel("About",
              "How successful have the models been at predicting the COVID-19 pandemic? The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME) have been used for planning purposes by many US states. This site let's you compare the mortality predicted by their models with the mortality we've actually seen so far. The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models every few days, and Johns Hopkins releases new data each day.",
              tags$hr(),
-             "Code is available on", tags$a("GitHub.", 
-                                            href=""),
-             "Created by ", tags$a("Tim Szewczyk", 
-                                   href="https://sz-tim.github.io/about/")
+             "Code is available on", 
+             tags$a("GitHub.", href="https://github.com/Sz-Tim/COVID19-IHME"),
+             "Created by ", 
+             tags$a("Tim Szewczyk", href="https://sz-tim.github.io/about/")
     )
 )
 
