@@ -36,7 +36,7 @@ ui <- navbarPage("COVID-19 Models",
                                start="2020-03-01", end="2020-06-01",
                                min="2020-01-03", max="2020-08-04"),
                 tags$hr(),
-                "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model update was released (i.e., the 'Apr 16' model starts on April 16). The vertical", tags$b("dotted line"), "shows the end of the most deadly 7-day period.",
+                "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 16' model starts on April 16). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
             ),
             mainPanel(plotOutput(outputId="country", width="100%")),
         )
@@ -66,7 +66,7 @@ ui <- navbarPage("COVID-19 Models",
                                     start="2020-03-01", end="2020-06-01",
                                     min="2020-01-03", max="2020-08-04"),
                      tags$hr(),
-                     "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model update was released (i.e., the 'Apr 16' model starts on April 16). The vertical", tags$b("dotted line"), "shows the end of the most deadly 7-day period.",
+                     "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 16' model starts on April 16). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
                  ),
                  mainPanel(plotOutput(outputId="state", width="100%")),
              )
@@ -99,7 +99,8 @@ server <- function(input, output) {
     obs.gl.i <- reactive({
         obs$obs.gl %>% ungroup %>%
             filter(Country==input$country & !is.na(Deaths.obs) &
-                       Date >= input$dates.gl[1] & Date <= input$dates.gl[2])
+                       Date >= input$dates.gl[1] & Date <= input$dates.gl[2]) %>%
+            mutate(src="Average")
     })
     obs.max.gl.i <- reactive({
         obs$obs.gl.max %>% filter(Country==input$country) %>%
@@ -133,7 +134,8 @@ server <- function(input, output) {
     obs.us.i <- reactive({
         obs$obs.us %>% ungroup %>%
             filter(State==input$state & !is.na(Deaths.obs) &
-                       Date >= input$dates.us[1] & Date <= input$dates.us[2])
+                       Date >= input$dates.us[1] & Date <= input$dates.us[2]) %>%
+            mutate(src="Average")
     })
     obs.max.us.i <- reactive({
         obs$obs.us.max %>% filter(State==input$state) %>%
@@ -172,16 +174,22 @@ server <- function(input, output) {
                        colour="black", size=2, shape=21) + 
             geom_text(data=gl.i.starts(), aes(group=model_date),
                        label="|", size=5, fontface="bold", family="mono") +
-            geom_line(data=obs.gl.i(), aes(y=Deaths.obs), 
+            geom_line(data=obs.gl.i(), aes(y=Deaths.obs, alpha=src), 
                       method="loess", stat="smooth",
-                      colour=1, size=1.5, span=0.5, formula=y~x, alpha=0.4) + 
+                      colour=1, size=1.5, span=0.5, formula=y~x) + 
             geom_vline(data=obs.max.gl.i(), aes(xintercept=Date), linetype=3) +
-            geom_text(data=obs.lab.gl(), aes(label=lab), hjust=0, size=5, colour=1) +
+            geom_text(data=obs.lab.gl(), aes(label=lab), hjust=0, 
+                      size=5, colour=1) +
             scale_colour_manual("Model Date", values=gl.cols(),
                                 labels=as.Date(unique(gl.i()$model_date), 
                                                format="%Y_%m_%d") %>%
-                                    format("%b %d")) +
-            scale_fill_brewer("Observed", type="seq") +
+                                    format("%b %d"),
+                                guide=guide_legend(order=1)) +
+            scale_alpha_manual("", values=0.4,
+                               guide=guide_legend(order=3,
+                                                  title.position="bottom")) +
+            scale_fill_brewer("\n\n\nObserved", type="seq",
+                              guide=guide_legend(order=2)) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
             labs(x="", y="") +
             facet_grid(span~., scales="free_y", switch="y") + 
@@ -203,16 +211,21 @@ server <- function(input, output) {
                        colour="black", size=2, shape=21) +
             geom_text(data=us.i.starts(), aes(group=model_date),
                       label="|", size=5, fontface="bold", family="mono") +
-            geom_line(data=obs.us.i(), aes(y=Deaths.obs),
+            geom_line(data=obs.us.i(), aes(y=Deaths.obs, alpha=src),
                       method="loess", stat="smooth",
-                      colour=1, size=1.5, span=0.5, formula=y~x, alpha=0.4) +
+                      colour=1, size=1.5, span=0.5, formula=y~x) +
             geom_vline(data=obs.max.us.i(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.us(), aes(label=lab), hjust=0, size=5, colour=1) +
             scale_colour_manual("Model Date", values=us.cols(),
                                 labels=as.Date(unique(us.i()$model_date),
                                                format="%Y_%m_%d") %>%
-                                    format("%b %d")) +
-            scale_fill_brewer("Observed", type="seq") +
+                                    format("%b %d"),
+                                guide=guide_legend(order=1)) +
+            scale_alpha_manual(NULL, values=0.4,
+                               guide=guide_legend(order=3,
+                                                  title.position="bottom")) +
+            scale_fill_brewer("\n\n\nObserved", type="seq",
+                              guide=guide_legend(order=2)) +
             scale_y_continuous(labels=pretty_numbers, position="right") +
             labs(x="", y="") +
             facet_grid(span~., scales="free_y", switch="y") +
