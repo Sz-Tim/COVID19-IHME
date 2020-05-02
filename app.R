@@ -4,11 +4,14 @@ library(shiny); library(tidyverse)
 theme_set(theme_bw() + theme(panel.grid=element_blank()))
 source("fn.R")
 obs <- load_obs()
+refresh_peak_plots(obs)
+latest.mod.Ymd <- max(obs$gl.df$model_date)
+latest.mod.bd <- format(as.Date(latest.mod.Ymd, format="%Y_%m_%d"), "%b %d")
 
 
 
 # Define UI for application
-ui <- navbarPage("COVID-19 Models", 
+ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     
     ###---- Tab: Countries vs. means
     tabPanel("Countries", 
@@ -29,14 +32,16 @@ ui <- navbarPage("COVID-19 Models",
                                                      format="%Y_%m_%d") %>%
                                                  format("%b %d")),
                             selected=c("2020_03_25", "2020_04_01",
-                                       "2020_04_16", "2020_04_28"),
+                                       latest.mod.Ymd),
                             multiple=TRUE),
                 dateRangeInput(inputId="dates.gl", 
                                label="Choose dates to display",
                                start="2020-03-01", end="2020-06-01",
                                min="2020-01-03", max="2020-08-04"),
                 tags$hr(),
-                "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 16' model starts on April 16). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                tags$hr(),
+                "'Mar 25' was the original model release. The 'Apr 01' update was the most pessimistic overall for the United States. The", paste0("'", latest.mod.bd, "'"), "update is the most recent."
             ),
             mainPanel(plotOutput(outputId="country", width="100%")),
         )
@@ -59,14 +64,16 @@ ui <- navbarPage("COVID-19 Models",
                                                           format="%Y_%m_%d") %>%
                                                       format("%b %d")),
                                  selected=c("2020_03_25", "2020_04_01",
-                                            "2020_04_16", "2020_04_28"),
+                                            latest.mod.Ymd),
                                  multiple=TRUE),
                      dateRangeInput(inputId="dates.us", 
                                     label="Choose dates to display",
                                     start="2020-03-01", end="2020-06-01",
                                     min="2020-01-03", max="2020-08-04"),
                      tags$hr(),
-                     "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 16' model starts on April 16). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                     "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                     tags$hr(),
+                     "'Mar 25' was the original model release. The 'Apr 01' update was the most pessimistic overall for the United States. The", paste0("'", latest.mod.bd, "'"), "update is the most recent."
                  ),
                  mainPanel(plotOutput(outputId="state", width="100%")),
              )
@@ -76,8 +83,10 @@ ui <- navbarPage("COVID-19 Models",
     tabPanel("Peaks",
              tags$h3("Which weeks have been the worst so far?"),
              fluidRow(
-                 column(6, plotOutput(outputId="peaks.countries")),
-                 column(6, plotOutput(outputId="peaks.states"))
+                 column(6, tags$img(src="country_peak.png",
+                                    width=500, height=900)),
+                 column(6, tags$img(src="states_peak.png",
+                                    width=500, height=900))
              )
     ),
     
@@ -238,83 +247,19 @@ server <- function(input, output) {
 
     }, width=600, height=675)
     
-    ###---- Plot: Country peaks
-    output$peaks.countries <- renderPlot({
-        obs$obs.gl.max %>% filter(obs > 5) %>%
-            arrange(Date, desc(Country)) %>% 
-            mutate(Country=factor(Country, levels=unique(Country))) %>%
-            ggplot(aes(ymin=Date, ymax=Date-7, colour=obs*7,
-                       x=Country)) + 
-            geom_linerange(size=5) + coord_flip() + 
-            scale_colour_gradient("Total deaths in 7-day period",  
-                                  low="#fff5f0" , high="red",
-                                  trans="log", limits=c(1, 20000),
-                                  breaks=c(2, 20, 200, 2e3, 2e4),
-                                  labels=c("2", "20", "200", "2,000", "20,000"), 
-                                  guide=guide_colorbar(title.position="top", 
-                                                       title.hjust=0.5,
-                                                       ticks.colour="black",
-                                                       ticks=T)) +
-            scale_y_date(breaks=seq(max(obs$obs.gl$Date),
-                                    min(obs$obs.gl.max$Date), 
-                                    by=-7), minor_breaks=NULL,
-                         labels=as.Date(seq(max(obs$obs.gl$Date),
-                                            min(obs$obs.gl.max$Date), 
-                                            by=-7), 
-                                        format="%Y_%m_%d") %>%
-                             format("%b %d")) +
-            scale_x_discrete(position="top") +
-            theme(legend.position="bottom", 
-                  legend.box.margin=margin(-10,0,0,0),
-                  legend.key.width=unit(15, "mm"),
-                  legend.key.height=unit(2, "mm"),
-                  axis.text=element_text(size=14),
-                  legend.text=element_text(size=14),
-                  axis.title=element_text(size=16),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18),
-                  panel.grid.major.x=element_line(size=0.25, colour="gray90")) +
-            labs(x="", y="", title="Countries") 
-    }, width=500, height=900)
-    
-    ###---- Plot: State peaks
-    output$peaks.states <- renderPlot({
-        obs$obs.us.max %>% 
-            arrange(Date, desc(State)) %>% 
-            mutate(State=factor(State, levels=unique(State))) %>%
-            ggplot(aes(ymin=Date, ymax=Date-7, colour=obs*7,
-                       x=State)) + 
-            geom_linerange(size=5) + coord_flip() + 
-            scale_colour_gradient("Total deaths in 7-day period",  
-                                  low="#fff5f0" , high="red",
-                                  trans="log", limits=c(1, 10000),
-                                  breaks=c(1, 10, 100, 1e3, 1e4),
-                                  labels=c("1", "10", "100", "1,000", "10,000"), 
-                                  guide=guide_colorbar(title.position="top", 
-                                                       title.hjust=0.5,
-                                                       ticks.colour="black",
-                                                       ticks=T)) +
-            scale_y_date(breaks=seq(max(obs$obs.us$Date),
-                                    min(obs$obs.us.max$Date), 
-                                    by=-7), minor_breaks=NULL, 
-                         labels=as.Date(seq(max(obs$obs.us$Date),
-                                            min(obs$obs.us.max$Date), 
-                                            by=-7), 
-                                        format="%Y_%m_%d") %>%
-                             format("%b %d")) +
-            scale_x_discrete(position="top") +
-            theme(legend.position="bottom", 
-                  legend.box.margin=margin(-10,0,0,0),
-                  legend.key.width=unit(15, "mm"),
-                  legend.key.height=unit(2, "mm"),
-                  axis.text=element_text(size=14),
-                  legend.text=element_text(size=14),
-                  axis.title=element_text(size=16),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18),
-                  panel.grid.major.x=element_line(size=0.25, colour="gray90")) +
-            labs(x="", y="", title="US States")
-    }, width=500, height=900)
+    # ###---- Plot: Country peaks
+    # output$peaks.countries <- renderImage({
+    #     list(src="figs/states_peak.pdf",
+    #          width=500, 
+    #          height=900) 
+    # })
+    # 
+    # ###---- Plot: State peaks
+    # output$peaks.states <- renderImage({
+    #    list(src="figs/states_peak.pdf",
+    #         width=500, 
+    #         height=900) 
+    # })
     
 }
 
