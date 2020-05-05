@@ -55,7 +55,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                 sidebarPanel(
                     selectInput(inputId="c.country",
                                 label="Choose a country",
-                                choices=sort(unique(obs$gl.df$Country)),
+                                choices=sort(unique(obs$obs.c.gl$Country)),
                                 selected="US"),
                     dateRangeInput(inputId="c.dates.gl",
                                    label="Choose dates to display",
@@ -108,7 +108,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
             )
         ),
         tabPanel("Cases",
-            tags$h3("How are confirmed cases changing among countries?"),
+            tags$h3("How are confirmed cases changing among US states?"),
                 sidebarLayout(
                     sidebarPanel(
                         selectInput(inputId="c.state",
@@ -314,7 +314,7 @@ server <- function(input, output) {
             geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
                        size=2, shape=21) + 
             geom_line(data=obs.c.gl.i(), aes(y=Cases.obs, alpha=src), method="loess", 
-                      stat="smooth", colour=1, size=1.5, span=0.5, formula=y~x) + 
+                      stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
             geom_vline(data=obs.max.c.gl.i(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.c.gl(), aes(y=Cases, label=lab), 
                       fontface=c("italic", "plain"), nudge_x=c(0,2),
@@ -352,7 +352,7 @@ server <- function(input, output) {
                        label="|", size=5, fontface="bold", family="mono") +
             geom_line(data=obs.d.gl.i(), aes(y=Deaths.obs, alpha=src), 
                       method="loess", stat="smooth",
-                      colour=1, size=1.5, span=0.5, formula=y~x) + 
+                      colour=1, size=1.5, span=0.6, formula=y~x) + 
             geom_vline(data=obs.max.d.gl.i(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.d.gl(), aes(label=lab), 
                       fontface=c("italic", "plain"), nudge_x=c(0,2),
@@ -391,7 +391,7 @@ server <- function(input, output) {
             geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
                        size=2, shape=21) + 
             geom_line(data=obs.c.us.i(), aes(y=Cases.obs, alpha=src), method="loess", 
-                      stat="smooth", colour=1, size=1.5, span=0.5, formula=y~x) + 
+                      stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
             geom_vline(data=obs.max.c.us.i(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.c.us(), aes(y=Cases, label=lab), 
                       fontface=c("italic", "plain"), nudge_x=c(0,2),
@@ -429,7 +429,7 @@ server <- function(input, output) {
                       label="|", size=5, fontface="bold", family="mono") +
             geom_line(data=obs.d.us.i(), aes(y=Deaths.obs, alpha=src),
                       method="loess", stat="smooth",
-                      colour=1, size=1.5, span=0.5, formula=y~x) +
+                      colour=1, size=1.5, span=0.6, formula=y~x) +
             geom_vline(data=obs.max.d.us.i(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.d.us(), aes(label=lab), nudge_x=c(0,2),
                       fontface=c("italic", "plain"),
