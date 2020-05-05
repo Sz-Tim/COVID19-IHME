@@ -11,7 +11,7 @@ latest.mod.bd <- format(as.Date(latest.mod.Ymd, format="%Y_%m_%d"), "%b %d")
 
 
 # Define UI for application
-ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
+ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
     
     navbarMenu("Countries",
         tabPanel("Deaths",
