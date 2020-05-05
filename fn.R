@@ -206,7 +206,7 @@ refresh_peak_plots <- function(obs) {
     labs(x="", y="", title="Countries") 
   ggsave("www/country_d_peak.png", country.d, width=7.5, height=13.5, units="in")
   
-  country.c <- obs$obs.c.gl.max %>% filter(obs > 50) %>%
+  country.c <- obs$obs.c.gl.max %>% filter(obs > 100) %>%
     arrange(Date, desc(Country)) %>% 
     mutate(Country=factor(Country, levels=unique(Country))) %>%
     ggplot(aes(x=Country, ymin=Date, ymax=Date-7, colour=obs*7)) + 
@@ -232,7 +232,7 @@ refresh_peak_plots <- function(obs) {
           legend.box.margin=margin(-10,0,0,0),
           legend.key.width=unit(20, "mm"),
           legend.key.height=unit(2, "mm"),
-          axis.text=element_text(size=11),
+          axis.text=element_text(size=12),
           legend.text=element_text(size=14),
           axis.title=element_text(size=16),
           legend.title=element_text(size=16), 
