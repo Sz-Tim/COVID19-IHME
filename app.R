@@ -15,7 +15,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     
     navbarMenu("Countries",
         tabPanel("Deaths",
-            tags$h3("How well have the IHME models predicted mortality for countries?"),
+            tags$h3("How well have the IHME models predicted", tags$b("mortality"), "for countries?"),
             sidebarLayout(
                 sidebarPanel(
                     selectInput(inputId="d.country",
@@ -39,7 +39,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                   label="Display per million people",
                                   value=FALSE),
                     tags$hr(),
-                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
                     tags$hr(),
                     "Mar 25: original release", tags$br(),
                     "May 04: most pessimistic for US", tags$br(),
@@ -50,7 +50,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
             )
         ),
         tabPanel("Cases",
-            tags$h3("How are confirmed cases changing among countries?"),
+            tags$h3("How are", tags$b("confirmed cases"), "changing among countries?"),
             sidebarLayout(
                 sidebarPanel(
                     selectInput(inputId="c.country",
@@ -95,7 +95,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     ),
     navbarMenu("US States",
         tabPanel("Deaths",
-            tags$h3("How well have the IHME models predicted mortality for US states?"), 
+            tags$h3("How well have the IHME models predicted", tags$b("mortality"), "for US states?"), 
             sidebarLayout(
                 sidebarPanel(
                     selectInput(inputId="d.state",
@@ -119,18 +119,18 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                   label="Display per 10,000 people",
                                   value=FALSE),
                     tags$hr(),
-                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
                     tags$hr(),
                     "Mar 25: original release", tags$br(),
-                    "May 04: most pessimistic for US", tags$br(),
                     "Apr 16: most optimistic for US", tags$br(),
+                    "May 04: most pessimistic for US", tags$br(),
                     paste0(latest.mod.bd, ":"), "most recent"
                 ),
                 mainPanel(plotOutput(outputId="state.d", width="100%"))
             )
         ),
         tabPanel("Cases",
-            tags$h3("How are confirmed cases changing among US states?"),
+            tags$h3("How are", tags$b("confirmed cases"), "changing among US states?"),
                 sidebarLayout(
                     sidebarPanel(
                         selectInput(inputId="c.state",
@@ -175,7 +175,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     ),
     navbarMenu(title="Peaks",
         tabPanel("Deaths",
-            tags$h3("Which weeks have had the most deaths so far?"),
+            tags$h3("Which weeks have had the", tags$b("most deaths"), "so far?"),
             fluidRow(
                 column(6, tags$img(src="country_d_peak.png",
                                    width=500, height=900)),
@@ -184,7 +184,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
             )
         ),
         tabPanel("Cases",
-            tags$h3("Which weeks have had the most new cases so far?"),
+            tags$h3("Which weeks have had the", tags$b("most new cases"), "so far?"),
             fluidRow(
                 column(6, tags$img(src="country_c_peak.png",
                                    width=500, height=900)),
@@ -233,6 +233,13 @@ server <- function(input, output) {
         ) %>% arrange(desc(span), Type) %>%
             mutate(SpanType=factor(paste(span, Type), 
                                      levels=c(unique(paste(span, Type)))))
+    })
+    obs.lab.comp.gl <- reactive({
+        tibble(SpanType=factor(levels(obs.comp.gl()$SpanType)[1], 
+                               levels=levels(obs.comp.gl()$SpanType)),
+               Date=input$comp.dates.gl[1], 
+               obs=max(obs.comp.gl()$obs),
+               lab=ifelse(input$comp.pK.gl, "per million", ""))
     })
     obs.c.gl.i <- reactive({
         obs$obs.c.gl %>% ungroup %>%
@@ -328,6 +335,13 @@ server <- function(input, output) {
         ) %>% arrange(desc(span), Type) %>%
             mutate(SpanType=factor(paste(span, Type), 
                                    levels=c(unique(paste(span, Type)))))
+    })
+    obs.lab.comp.us <- reactive({
+        tibble(SpanType=factor(levels(obs.comp.us()$SpanType)[1], 
+                               levels=levels(obs.comp.us()$SpanType)),
+               Date=input$comp.dates.us[1], 
+               obs=max(obs.comp.us()$obs),
+               lab=ifelse(input$comp.pK.us, "per 10k", ""))
     })
     obs.c.us.i <- reactive({
         obs$obs.c.us %>% ungroup %>%
@@ -478,10 +492,13 @@ server <- function(input, output) {
     ###---- Plot: Country comparisons
     output$country.comp <- renderPlot({
         ggplot(obs.comp.gl(), 
-               aes(Date, y=obs, colour=Country, group=Country)) +
+               aes(Date, y=obs, colour=Country)) +
+            geom_text(data=obs.lab.comp.gl(), aes(label=lab), colour=1,
+                      hjust=0, size=5) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
             geom_point(alpha=0.5, size=1) + 
-            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x, size=1) +
+            geom_line(aes(group=Country), stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
             geom_rug(data=filter(obs.comp.gl(), Date==last(Date)), 
                      sides="r") +
             scale_colour_brewer("", type="qual", palette="Dark2") +
@@ -580,10 +597,13 @@ server <- function(input, output) {
     ###---- Plot: State comparisons
     output$state.comp <- renderPlot({
         ggplot(obs.comp.us(), 
-               aes(Date, y=obs, colour=State, group=State)) +
+               aes(Date, y=obs, colour=State)) +
+            geom_text(data=obs.lab.comp.us(), aes(label=lab), colour=1,
+                      hjust=0, size=5) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
             geom_point(alpha=0.5, size=1) + 
-            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x, size=1) +
+            geom_line(aes(group=State), stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
             geom_rug(data=filter(obs.comp.us(), Date==last(Date)), sides="r") +
             scale_colour_brewer("", type="qual", palette="Dark2") +
             scale_y_continuous(labels=pretty_numbers, position="right",
