@@ -28,7 +28,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                                  as.Date(unique(obs$gl.df$model_date),
                                                          format="%Y_%m_%d") %>%
                                                      format("%b %d")),
-                                selected=c("2020_03_25", "2020_04_01",
+                                selected=c("2020_03_25", "2020_05_04",
                                            "2020_04_16", latest.mod.Ymd),
                                 multiple=TRUE),
                     dateRangeInput(inputId="d.dates.gl",
@@ -42,7 +42,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                     "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
                     tags$hr(),
                     "Mar 25: original release", tags$br(),
-                    "Apr 01: most pessimistic for US", tags$br(),
+                    "May 04: most pessimistic for US", tags$br(),
                     "Apr 16: most optimistic for US", tags$br(),
                     paste0(latest.mod.bd, ":"), "most recent"
                 ),
@@ -108,7 +108,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                                  as.Date(unique(obs$us.df$model_date),
                                                          format="%Y_%m_%d") %>%
                                                      format("%b %d")),
-                                selected=c("2020_03_25", "2020_04_01",
+                                selected=c("2020_03_25", "2020_05_04",
                                            "2020_04_16", latest.mod.Ymd),
                                 multiple=TRUE),
                     dateRangeInput(inputId="d.dates.us",
@@ -122,7 +122,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                     "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the mean predictions, starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
                     tags$hr(),
                     "Mar 25: original release", tags$br(),
-                    "Apr 01: most pessimistic for US", tags$br(),
+                    "May 04: most pessimistic for US", tags$br(),
                     "Apr 16: most optimistic for US", tags$br(),
                     paste0(latest.mod.bd, ":"), "most recent"
                 ),
@@ -195,12 +195,16 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     ),
     
     tabPanel("About",
-             "How successful have the models been at predicting the COVID-19 pandemic? The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME) have been used for planning purposes by many US states. This site let's you compare the mortality predicted by their models with the mortality we've actually seen so far. The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models every few days, and Johns Hopkins releases new data each day.",
+             "The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME) have been used for planning purposes by many US states. This site lets you compare the mortality predicted by their models with the mortality we've actually seen so far, see the trend in number of confirmed cases, and compare the patterns among countries or US states. The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models approximately twice each week, and Johns Hopkins releases new data each day.",
              tags$hr(),
-             "Code is available on",
-             tags$a("GitHub.", href="https://github.com/Sz-Tim/COVID19-IHME"),
-             "Created by ",
-             tags$a("Tim Szewczyk", href="https://sz-tim.github.io/about/")
+             fluidRow(column(12, align="center",
+                tags$br(),
+                "Code is available on",
+                tags$a("GitHub", href="https://github.com/Sz-Tim/COVID19-IHME"),
+                tags$br(),
+                "Created by ",
+                tags$a("Tim Szewczyk", href="https://sz-tim.github.io/about/")
+             ))
     )
 )
 
@@ -477,7 +481,7 @@ server <- function(input, output) {
                aes(Date, y=obs, colour=Country, group=Country)) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
             geom_point(alpha=0.5, size=1) + 
-            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x) +
+            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x, size=1) +
             geom_rug(data=filter(obs.comp.gl(), Date==last(Date)), 
                      sides="r") +
             scale_colour_brewer("", type="qual", palette="Dark2") +
@@ -579,7 +583,7 @@ server <- function(input, output) {
                aes(Date, y=obs, colour=State, group=State)) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
             geom_point(alpha=0.5, size=1) + 
-            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x) +
+            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x, size=1) +
             geom_rug(data=filter(obs.comp.us(), Date==last(Date)), sides="r") +
             scale_colour_brewer("", type="qual", palette="Dark2") +
             scale_y_continuous(labels=pretty_numbers, position="right",
