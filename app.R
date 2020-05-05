@@ -15,7 +15,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     
     navbarMenu("Countries",
         tabPanel("Deaths",
-            tags$h3("How well have the IHME models predicted", tags$b("mortality"), "for countries?"),
+            tags$h3("How well have the", tags$a("IHME", href="http://www.healthdata.org/covid/data-downloads"), "models predicted", tags$b("mortality"), "for countries?"),
             sidebarLayout(
                 sidebarPanel(
                     selectInput(inputId="d.country",
@@ -39,11 +39,11 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                   label="Display per million people",
                                   value=FALSE),
                     tags$hr(),
-                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
                     tags$hr(),
                     "Mar 25: original release", tags$br(),
-                    "May 04: most pessimistic for US", tags$br(),
                     "Apr 16: most optimistic for US", tags$br(),
+                    "May 04: most pessimistic for US", tags$br(),
                     paste0(latest.mod.bd, ":"), "most recent"
                 ),
                 mainPanel(plotOutput(outputId="country.d", width="100%"))
@@ -65,7 +65,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                   label="Display per million people",
                                   value=FALSE),
                     tags$hr(),
-                    "The", tags$b("points"), "show reported cases, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
+                    "The", tags$b("points"), "show reported cases, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
                 ),
                 mainPanel(plotOutput(outputId="country.c", width="100%"))
             )
@@ -95,7 +95,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     ),
     navbarMenu("US States",
         tabPanel("Deaths",
-            tags$h3("How well have the IHME models predicted", tags$b("mortality"), "for US states?"), 
+            tags$h3("How well have the", tags$a("IHME", href="http://www.healthdata.org/covid/data-downloads"), "models predicted", tags$b("mortality"), "for US states?"), 
             sidebarLayout(
                 sidebarPanel(
                     selectInput(inputId="d.state",
@@ -119,7 +119,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                   label="Display per 10,000 people",
                                   value=FALSE),
                     tags$hr(),
-                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
                     tags$hr(),
                     "Mar 25: original release", tags$br(),
                     "Apr 16: most optimistic for US", tags$br(),
@@ -145,7 +145,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                                       label="Display per 10,000 people",
                                       value=FALSE),
                         tags$hr(),
-                        "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
+                        "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
                     ),
                     mainPanel(plotOutput(outputId="state.c", width="100%")),
                 )
@@ -195,11 +195,11 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
     ),
     
     tabPanel("About",
-             "The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME) have been used for planning purposes by many US states. This site lets you compare the mortality predicted by their models with the mortality we've actually seen so far, see the trend in number of confirmed cases, and compare the patterns among countries or US states. The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models approximately twice each week, and Johns Hopkins releases new data each day.",
+             "The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME), also known as the 'Chris Murray models', have been used for planning purposes by many US states and by the US federal government. This site allows you to compare the mortality predicted by their models with the mortality we've actually seen so far, see the trend in number of confirmed cases, and compare the patterns among countries or US states. The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models approximately twice each week, and Johns Hopkins releases new data each day. No corrections have been made for testing effort.",
              tags$hr(),
              fluidRow(column(12, align="center",
                 tags$br(),
-                "Code is available on",
+                "All code is published on",
                 tags$a("GitHub", href="https://github.com/Sz-Tim/COVID19-IHME"),
                 tags$br(),
                 "Created by ",
@@ -307,10 +307,6 @@ server <- function(input, output) {
                             c("", "(per million)")[input$d.pK.gl+1]),
                      paste("7-day peak:", format(obs.max.d.gl.i()$Date, "%b %d"))))
     })
-    gl.cols <- reactive({
-        mod.seq.gl <- seq(0,1,length.out=n_distinct(d.gl.i()$model_date))
-        scales::seq_gradient_pal("#543005", "#fec44f")(mod.seq.gl)
-    })
     
     
     ###---- Reactives: States
@@ -409,29 +405,26 @@ server <- function(input, output) {
                             c("", "(per 10k)")[input$d.pK.us+1]),
                      paste("7-day peak:", format(obs.max.d.us.i()$Date, "%b %d"))))
     })
-    us.cols <- reactive({
-        mod.seq.us <- seq(0,1,length.out=n_distinct(d.us.i()$model_date))
-        scales::seq_gradient_pal("#543005", "#fec44f")(mod.seq.us)
-    })
+    
     
     ###---- Plot: Country cases
     output$country.c <- renderPlot({
         ggplot(obs.c.gl.i(), aes(Date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
-                       size=2, shape=21) + 
             geom_line(data=obs.c.gl.i(), aes(y=Cases.obs, alpha=src), method="loess", 
                       stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
             geom_vline(data=obs.max.c.gl.i(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.c.gl(), aes(y=Cases, label=lab), 
                       fontface=c("italic", "plain"), nudge_x=c(0,2),
                       size=obs.lab.c.gl()$lab.size, hjust=0, vjust=1, colour=1) +
+            geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
+                       size=2, shape=21) + 
             geom_rug(data=filter(obs.c.gl.i(), Date==last(Date) & span=="Total"), 
                      aes(y=Cases.obs), colour="black", sides="r") +
             scale_alpha_manual("", values=0.4,
                                guide=guide_legend(order=3,
                                                   title.position="bottom")) +
-            scale_fill_brewer("Observed", type="seq",
+            scale_fill_brewer("Observed", type="div", palette=1,
                               guide=guide_legend(order=2)) +
             xlim(as.Date(input$c.dates.gl[1], format="%Y_%m_%d"),
                  as.Date(input$c.dates.gl[2], format="%Y_%m_%d")) +
@@ -452,8 +445,6 @@ server <- function(input, output) {
         ggplot(d.gl.i(), aes(Date, Deaths, colour=model_date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
             geom_line(aes(group=model_date), size=1) + 
-            geom_point(data=obs.d.gl.i(), aes(y=Deaths.obs, fill=wDay), 
-                       colour="black", size=2, shape=21) + 
             geom_text(data=d.gl.i.starts(), aes(group=model_date),
                        label="|", size=5, fontface="bold", family="mono") +
             geom_line(data=obs.d.gl.i(), aes(y=Deaths.obs, alpha=src), 
@@ -465,15 +456,17 @@ server <- function(input, output) {
                       size=obs.lab.d.gl()$lab.size, hjust=0, vjust=1, colour=1) +
             geom_rug(data=filter(obs.d.gl.i(), Date==last(Date) & span=="Total"), 
                      aes(y=Deaths.obs), colour="black", sides="r") +
-            scale_colour_manual("Model Date", values=gl.cols(),
-                                labels=as.Date(unique(d.gl.i()$model_date), 
-                                               format="%Y_%m_%d") %>%
-                                    format("%b %d"),
-                                guide=guide_legend(order=1)) +
+            geom_point(data=obs.d.gl.i(), aes(y=Deaths.obs, fill=wDay), 
+                       colour="black", size=2, shape=21) + 
+            scale_colour_viridis_d("Model Date",
+                                 labels=as.Date(unique(d.gl.i()$model_date), 
+                                                format="%Y_%m_%d") %>%
+                                     format("%b %d"),
+                                 guide=guide_legend(order=1)) +
             scale_alpha_manual("", values=0.4,
                                guide=guide_legend(order=3,
                                                   title.position="bottom")) +
-            scale_fill_brewer("\n\n\nObserved", type="seq",
+            scale_fill_brewer("\n\n\nObserved", type="div", 
                               guide=guide_legend(order=2)) +
             xlim(as.Date(input$d.dates.gl[1], format="%Y_%m_%d"),
                  as.Date(input$d.dates.gl[2], format="%Y_%m_%d")) +
@@ -496,12 +489,12 @@ server <- function(input, output) {
             geom_text(data=obs.lab.comp.gl(), aes(label=lab), colour=1,
                       hjust=0, size=5) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_point(alpha=0.5, size=1) + 
             geom_line(aes(group=Country), stat="smooth", method="loess", 
                       span=0.6, formula=y~x, size=1) +
             geom_rug(data=filter(obs.comp.gl(), Date==last(Date)), 
                      sides="r") +
-            scale_colour_brewer("", type="qual", palette="Dark2") +
+            geom_point(alpha=0.5, size=1) + 
+            scale_colour_viridis_d("", end=0.9, option="plasma") +
             scale_y_continuous(labels=pretty_numbers, position="right",
                                limits=c(0,NA)) + 
             xlim(as.Date(input$comp.dates.gl[1], format="%Y_%m_%d"),
@@ -522,8 +515,6 @@ server <- function(input, output) {
     output$state.c <- renderPlot({
         ggplot(obs.c.us.i(), aes(Date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
-                       size=2, shape=21) + 
             geom_line(data=obs.c.us.i(), aes(y=Cases.obs, alpha=src), method="loess", 
                       stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
             geom_vline(data=obs.max.c.us.i(), aes(xintercept=Date), linetype=3) +
@@ -532,10 +523,12 @@ server <- function(input, output) {
                       size=obs.lab.c.us()$lab.size, hjust=0, vjust=1, colour=1) +
             geom_rug(data=filter(obs.c.us.i(), Date==last(Date) & span=="Total"), 
                      aes(y=Cases.obs), colour="black", sides="r") +
+            geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
+                       size=2, shape=21) + 
             scale_alpha_manual("", values=0.4,
                                guide=guide_legend(order=3,
                                                   title.position="bottom")) +
-            scale_fill_brewer("Observed", type="seq",
+            scale_fill_brewer("Observed", type="div", 
                               guide=guide_legend(order=2)) +
             xlim(as.Date(input$c.dates.us[1], format="%Y_%m_%d"),
                  as.Date(input$c.dates.us[2], format="%Y_%m_%d")) +
@@ -557,8 +550,6 @@ server <- function(input, output) {
         ggplot(d.us.i(), aes(Date, Deaths, colour=model_date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
             geom_line(aes(group=model_date), size=1) +
-            geom_point(data=obs.d.us.i(), aes(y=Deaths.obs, fill=wDay),
-                       colour="black", size=2, shape=21) +
             geom_text(data=d.us.i.starts(), aes(group=model_date),
                       label="|", size=5, fontface="bold", family="mono") +
             geom_line(data=obs.d.us.i(), aes(y=Deaths.obs, alpha=src),
@@ -570,15 +561,17 @@ server <- function(input, output) {
                       size=obs.lab.d.us()$lab.size, hjust=0, vjust=1, colour=1) +
             geom_rug(data=filter(obs.d.us.i(), Date==last(Date) & span=="Total"), 
                      aes(y=Deaths.obs), colour="black", sides="r") +
-            scale_colour_manual("Model Date", values=us.cols(),
-                                labels=as.Date(unique(d.us.i()$model_date),
-                                               format="%Y_%m_%d") %>%
-                                    format("%b %d"),
-                                guide=guide_legend(order=1)) +
+            geom_point(data=obs.d.us.i(), aes(y=Deaths.obs, fill=wDay),
+                       colour="black", size=2, shape=21) +
+            scale_colour_viridis_d("Model Date",
+                                   labels=as.Date(unique(d.us.i()$model_date), 
+                                                  format="%Y_%m_%d") %>%
+                                       format("%b %d"),
+                                   guide=guide_legend(order=1)) +
             scale_alpha_manual(NULL, values=0.4,
                                guide=guide_legend(order=3,
                                                   title.position="bottom")) +
-            scale_fill_brewer("\n\n\nObserved", type="seq",
+            scale_fill_brewer("\n\n\nObserved", type="div", 
                               guide=guide_legend(order=2)) +
             xlim(as.Date(input$d.dates.us[1], format="%Y_%m_%d"),
                  as.Date(input$d.dates.us[2], format="%Y_%m_%d")) +
@@ -601,11 +594,11 @@ server <- function(input, output) {
             geom_text(data=obs.lab.comp.us(), aes(label=lab), colour=1,
                       hjust=0, size=5) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_point(alpha=0.5, size=1) + 
             geom_line(aes(group=State), stat="smooth", method="loess", 
                       span=0.6, formula=y~x, size=1) +
             geom_rug(data=filter(obs.comp.us(), Date==last(Date)), sides="r") +
-            scale_colour_brewer("", type="qual", palette="Dark2") +
+            geom_point(alpha=0.5, size=1) + 
+            scale_colour_viridis_d("", end=0.9, option="plasma") +
             scale_y_continuous(labels=pretty_numbers, position="right",
                                limits=c(0,NA)) + 
             xlim(as.Date(input$comp.dates.us[1], format="%Y_%m_%d"),
