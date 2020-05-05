@@ -46,7 +46,7 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                     "Apr 16: most optimistic for US", tags$br(),
                     paste0(latest.mod.bd, ":"), "most recent"
                 ),
-                mainPanel(plotOutput(outputId="country.d", width="100%")),
+                mainPanel(plotOutput(outputId="country.d", width="100%"))
             )
         ),
         tabPanel("Cases",
@@ -67,7 +67,29 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                     tags$hr(),
                     "The", tags$b("points"), "show reported cases, with the", tags$b("point color"), "indicating the day of the week (lightest = Sunday), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
                 ),
-                mainPanel(plotOutput(outputId="country.c", width="100%")),
+                mainPanel(plotOutput(outputId="country.c", width="100%"))
+            )
+        ),
+        tabPanel("Compare",
+            tags$h3("How do countries compare?"),
+            sidebarLayout(
+                sidebarPanel(
+                    selectInput(inputId="comp.country",
+                                label="Choose countries to show",
+                                choices=sort(unique(obs$obs.c.gl$Country)),
+                                selected=c("Switzerland", "Italy", "US"),
+                                multiple=TRUE),
+                    dateRangeInput(inputId="comp.dates.gl",
+                                   label="Choose dates to display",
+                                   start="2020-03-01", end=Sys.Date(),
+                                   min="2020-01-03", max=Sys.Date()),
+                    checkboxInput(inputId="comp.pK.gl",
+                                  label="Display per million people",
+                                  value=TRUE),
+                    tags$hr(),
+                    "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
+                ),
+                mainPanel(plotOutput(outputId="country.comp", width="100%"))
             )
         )
     ),
@@ -127,6 +149,28 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
                     ),
                     mainPanel(plotOutput(outputId="state.c", width="100%")),
                 )
+        ),
+        tabPanel("Compare",
+                 tags$h3("How do states compare?"),
+                 sidebarLayout(
+                     sidebarPanel(
+                         selectInput(inputId="comp.state",
+                                     label="Choose states to show",
+                                     choices=sort(unique(obs$obs.c.us$State)),
+                                     selected=c("Colorado", "Georgia", "Illinois"),
+                                     multiple=TRUE),
+                         dateRangeInput(inputId="comp.dates.us",
+                                        label="Choose dates to display",
+                                        start="2020-03-01", end=Sys.Date(),
+                                        min="2020-01-03", max=Sys.Date()),
+                         checkboxInput(inputId="comp.pK.us",
+                                       label="Display per 10k people",
+                                       value=TRUE),
+                         tags$hr(),
+                         "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
+                     ),
+                     mainPanel(plotOutput(outputId="state.comp", width="100%"))
+                 )
         )
     ),
     navbarMenu(title="Peaks",
@@ -164,6 +208,28 @@ ui <- navbarPage("COVID-19 Models", theme=shinythemes::shinytheme("yeti"),
 server <- function(input, output) {
     
     ###---- Reactives: Countries
+    obs.comp.gl <- reactive({
+        bind_rows(
+            obs$obs.c.gl %>% ungroup %>%
+                filter(Country %in% input$comp.country & !is.na(Cases.obs) &
+                           Date >= input$comp.dates.gl[1] & 
+                           Date <= input$comp.dates.gl[2]) %>%
+                mutate(Type="Cases",
+                       obs=ifelse(rep(input$comp.pK.gl, n()), 
+                                  Cases.obs/pop, Cases.obs)) %>%
+                select(-pop, -wDay, -Cases.obs),
+            obs$obs.d.gl %>% ungroup %>%
+                filter(Country %in% input$comp.country & !is.na(Deaths.obs) &
+                           Date >= input$comp.dates.gl[1] & 
+                           Date <= input$comp.dates.gl[2]) %>%
+                mutate(Type="Deaths",
+                       obs=ifelse(rep(input$comp.pK.gl, n()), 
+                                  Deaths.obs/pop, Deaths.obs)) %>%
+                select(-pop, -wDay, -Deaths.obs)
+        ) %>% arrange(desc(span), Type) %>%
+            mutate(SpanType=factor(paste(span, Type), 
+                                     levels=c(unique(paste(span, Type)))))
+    })
     obs.c.gl.i <- reactive({
         obs$obs.c.gl %>% ungroup %>%
             filter(Country==input$c.country & !is.na(Cases.obs) &
@@ -235,7 +301,30 @@ server <- function(input, output) {
         scales::seq_gradient_pal("#543005", "#fec44f")(mod.seq.gl)
     })
     
+    
     ###---- Reactives: States
+    obs.comp.us <- reactive({
+        bind_rows(
+            obs$obs.c.us %>% ungroup %>%
+                filter(State %in% input$comp.state & !is.na(Cases.obs) &
+                           Date >= input$comp.dates.us[1] & 
+                           Date <= input$comp.dates.us[2]) %>%
+                mutate(Type="Cases",
+                       obs=ifelse(rep(input$comp.pK.us, n()), 
+                                  Cases.obs/pop, Cases.obs)) %>%
+                select(-pop, -wDay, -Cases.obs),
+            obs$obs.d.us %>% ungroup %>%
+                filter(State %in% input$comp.state & !is.na(Deaths.obs) &
+                           Date >= input$comp.dates.us[1] & 
+                           Date <= input$comp.dates.us[2]) %>%
+                mutate(Type="Deaths",
+                       obs=ifelse(rep(input$comp.pK.us, n()), 
+                                  Deaths.obs/pop, Deaths.obs)) %>%
+                select(-pop, -wDay, -Deaths.obs)
+        ) %>% arrange(desc(span), Type) %>%
+            mutate(SpanType=factor(paste(span, Type), 
+                                   levels=c(unique(paste(span, Type)))))
+    })
     obs.c.us.i <- reactive({
         obs$obs.c.us %>% ungroup %>%
             filter(State==input$c.state & !is.na(Cases.obs) &
@@ -338,7 +427,6 @@ server <- function(input, output) {
                   legend.title=element_text(size=16), 
                   title=element_text(size=18), 
                   strip.text=element_text(size=16))
-        
     }, width=600, height=675)
     
     ###---- Plot: Countries vs. means
@@ -381,8 +469,33 @@ server <- function(input, output) {
                   legend.title=element_text(size=16), 
                   title=element_text(size=18), 
                   strip.text=element_text(size=16))
-        
     }, width=600, height=675)
+    
+    ###---- Plot: Country comparisons
+    output$country.comp <- renderPlot({
+        ggplot(obs.comp.gl(), 
+               aes(Date, y=obs, colour=Country, group=Country)) +
+            geom_hline(yintercept=0, colour="gray30", size=0.5) +
+            geom_point(alpha=0.5, size=1) + 
+            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x) +
+            geom_rug(data=filter(obs.comp.gl(), Date==last(Date)), 
+                     sides="r") +
+            scale_colour_brewer("", type="qual", palette="Dark2") +
+            scale_y_continuous(labels=pretty_numbers, position="right",
+                               limits=c(0,NA)) + 
+            xlim(as.Date(input$comp.dates.gl[1], format="%Y_%m_%d"),
+                 as.Date(input$comp.dates.gl[2], format="%Y_%m_%d")) +
+            facet_wrap(~SpanType, scales="free_y") +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=13),
+                  legend.text=element_text(size=14),
+                  legend.title=element_text(size=16), 
+                  title=element_text(size=18), 
+                  strip.text=element_text(size=16),
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="horizontal")
+    }, width=600, height=625)
     
     ###---- Plot: State cases
     output$state.c <- renderPlot({
@@ -458,8 +571,32 @@ server <- function(input, output) {
                   legend.title=element_text(size=16),
                   title=element_text(size=18),
                   strip.text=element_text(size=16))
-
     }, width=600, height=675)
+    
+    ###---- Plot: State comparisons
+    output$state.comp <- renderPlot({
+        ggplot(obs.comp.us(), 
+               aes(Date, y=obs, colour=State, group=State)) +
+            geom_hline(yintercept=0, colour="gray30", size=0.5) +
+            geom_point(alpha=0.5, size=1) + 
+            geom_line(stat="smooth", method="loess", span=0.6, formula=y~x) +
+            geom_rug(data=filter(obs.comp.us(), Date==last(Date)), sides="r") +
+            scale_colour_brewer("", type="qual", palette="Dark2") +
+            scale_y_continuous(labels=pretty_numbers, position="right",
+                               limits=c(0,NA)) + 
+            xlim(as.Date(input$comp.dates.us[1], format="%Y_%m_%d"),
+                 as.Date(input$comp.dates.us[2], format="%Y_%m_%d")) +
+            facet_wrap(~SpanType, scales="free_y") +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=13),
+                  legend.text=element_text(size=14),
+                  legend.title=element_text(size=16), 
+                  title=element_text(size=18), 
+                  strip.text=element_text(size=16),
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="horizontal")
+    }, width=600, height=625)
 }
 
 # Run the application 
