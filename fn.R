@@ -40,6 +40,9 @@ refresh_IHME_csv <- function(ihme.dir="mods",
 
 #' Load datasets needed for shiny app
 load_obs <- function(ihme_csv="ihme_compiled.csv",
+                     mit_url=paste0("https://raw.githubusercontent.com/",
+                                    "COVIDAnalytics/website/master/",
+                                    "data/predicted/Global.csv"),
                      jhu.repo=paste0("https://raw.githubusercontent.com/",
                                      "CSSEGISandData/",
                                      "COVID-19/master/")) {
@@ -52,8 +55,26 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
   abbr.us <- read_csv("stateCodes.csv")
   
   
-  #--- IHME data ---------------------------------------------------------------
+  #--- IHME predictions --------------------------------------------------------
   ihme.df <- read_csv(ihme_csv)
+  
+  
+  #--- MIT predictions ---------------------------------------------------------
+  mit.df <- read_csv(mit_url) %>% 
+    filter(Country != "None") %>%
+    rename(Date=Day, 
+           Total_Cases=`Total Detected`, 
+           Total_Deaths=`Total Detected Deaths`) %>%
+    select(Country, Province, Date, Total_Cases, Total_Deaths) %>%
+    group_by(Country, Province) %>% 
+    mutate(Daily_Cases=Total_Cases-lag(Total_Cases), 
+           Daily_Deaths=Total_Deaths-lag(Total_Deaths)) %>%
+    ungroup %>%
+    pivot_longer(4:7, names_to="Metric", values_to="val") %>%
+    mutate(span=str_split_fixed(Metric, "_", 2)[,1],
+           Type=str_split_fixed(Metric, "_", 2)[,2]) %>%
+    select(-Metric) %>%
+    pivot_wider(names_from="Type", values_from="val")
   
   
   #--- Countries ---------------------------------------------------------------
@@ -100,12 +121,17 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     filter(!is.na(mn_7d)) %>% arrange(Country, mn_7d) %>% group_by(Country) %>% 
     summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop), abbr=first(abbr))
   gl.df <- full_join(filter(ihme.df, Country %in% obs.d.gl$Country & 
-                                Country != "Georgia"), 
-                       filter(obs.d.gl, Country %in% ihme.df$Country), 
-                       by=c("Date", "Country", "span")) %>%
+                              Country != "Georgia"), 
+                     filter(obs.d.gl, Country %in% ihme.df$Country), 
+                     by=c("Date", "Country", "span")) %>%
     filter(!is.na(model_date)) %>%
     mutate(modelDate=as.Date(model_date, format="%Y_%m_%d") %>%
              format("%b %d")) %>%
+    mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
+  mit.gl <- mit.df %>% filter(Province=="None") %>%
+    group_by(Country, Date, span) %>% 
+    summarise(Cases=sum(Cases), Deaths=sum(Deaths)) %>%
     mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
            abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   
@@ -161,13 +187,17 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
                      by=c("State", "Date", "span")) %>% group_by(State) %>%
     mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
            abbr=abbr.us$Code[match(State, abbr.us$State)])
+  mit.us <- mit.df %>% filter(Country=="US" & Province !="None") %>% 
+    rename(State=Province) %>%
+    mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           abbr=abbr.us$Code[match(State, abbr.us$State)])
   
   return(list(obs.d.gl=obs.d.gl, obs.d.gl.max=obs.d.gl.max, 
               obs.c.gl=obs.c.gl, obs.c.gl.max=obs.c.gl.max,
-              gl.df=gl.df,
+              gl.df=gl.df, mit.gl=mit.gl,
               obs.d.us=obs.d.us, obs.d.us.max=obs.d.us.max, 
               obs.c.us=obs.c.us, obs.c.us.max=obs.c.us.max, 
-              us.df=us.df))
+              us.df=us.df, mit.us=mit.us))
 }
 
 

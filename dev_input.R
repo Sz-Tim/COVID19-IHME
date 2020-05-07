@@ -1,0 +1,27 @@
+input <- list(d.country="US",
+              d.modSource.gl=c("IHME", "MIT"),
+              d.modDates.gl=c("2020_03_25", "2020_05_04",
+                              "2020_04_16"),
+              d.dates.gl=c("2020-03-01", "2020-07-01"),
+              d.pK.gl=F,
+              
+              c.country="US",
+              c.modSource.gl="MIT",
+              c.modDates.gl=c("2020_03_25", "2020_05_04",
+                              "2020_04_16"),
+              c.dates.gl=c("2020-03-01", "2020-07-01"),
+              c.pK.gl=F,
+              
+              d.state="Colorado",
+              d.modSource.us=c("IHME", "MIT"),
+              d.modDates.us=c("2020_03_25", "2020_05_04",
+                              "2020_04_16"),
+              d.dates.us=c("2020-03-01", "2020-07-01"),
+              d.pK.us=F,
+              
+              c.state="Colorado",
+              c.modSource.us="MIT",
+              c.modDates.us=c("2020_03_25", "2020_05_04",
+                              "2020_04_16"),
+              c.dates.us=c("2020-03-01", "2020-07-01"),
+              c.pK.us=F)

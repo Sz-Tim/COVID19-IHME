@@ -12,200 +12,227 @@ latest.mod.bd <- format(as.Date(latest.mod.Ymd, format="%Y_%m_%d"), "%b %d")
 
 # Define UI for application
 ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
-    
-    navbarMenu("Countries",
-        tabPanel("Deaths",
-            tags$h3("How well have the", tags$a("IHME", href="http://www.healthdata.org/covid/data-downloads"), "models predicted", tags$b("mortality"), "for countries?"),
-            sidebarLayout(
-                sidebarPanel(
-                    selectInput(inputId="d.country",
-                                label="Choose a country",
-                                choices=sort(unique(obs$gl.df$Country)),
-                                selected="US"),
-                    selectInput(inputId="d.modDates.gl",
-                                label="Choose model releases to show",
-                                choices=setNames(unique(obs$gl.df$model_date),
-                                                 as.Date(unique(obs$gl.df$model_date),
-                                                         format="%Y_%m_%d") %>%
-                                                     format("%b %d")),
-                                selected=c("2020_03_25", "2020_05_04",
-                                           "2020_04_16", latest.mod.Ymd),
-                                multiple=TRUE),
-                    dateRangeInput(inputId="d.dates.gl",
-                                   label="Choose dates to display",
-                                   start="2020-03-01", end="2020-07-01",
-                                   min="2020-01-03", max="2020-08-04"),
-                    checkboxInput(inputId="d.pK.gl",
-                                  label="Display per million people",
-                                  value=FALSE),
-                    tags$hr(),
-                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
-                    tags$hr(),
-                    "Mar 25: original release", tags$br(),
-                    "Apr 16: most optimistic for US", tags$br(),
-                    "May 04: most pessimistic for US", tags$br(),
-                    paste0(latest.mod.bd, ":"), "most recent"
-                ),
-                mainPanel(plotOutput(outputId="country.d", width="100%"))
+                 
+        navbarMenu("Countries",
+            tabPanel("Deaths",
+                     tags$h3("How well have models predicted", tags$b("mortality"), "for countries?"),
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="d.country",
+                                         label="Choose a country",
+                                         choices=sort(unique(obs$gl.df$Country)),
+                                         selected="US"),
+                             checkboxGroupInput(inputId="d.modSource.gl",
+                                                label="Select models to show",
+                                                choices=c("IHME", "MIT"),
+                                                selected=c("IHME", "MIT"),
+                                                inline=TRUE),
+                             selectInput(inputId="d.modDates.gl",
+                                         label="Choose IHME model releases to show",
+                                         choices=setNames(unique(obs$gl.df$model_date),
+                                                          as.Date(unique(obs$gl.df$model_date),
+                                                                  format="%Y_%m_%d") %>%
+                                                              format("%b %d")),
+                                         selected=c("2020_03_25", "2020_05_04",
+                                                    "2020_04_16", latest.mod.Ymd),
+                                         multiple=TRUE),
+                             dateRangeInput(inputId="d.dates.gl",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end="2020-07-01",
+                                            min="2020-01-03", max="2020-08-04"),
+                             checkboxInput(inputId="d.pK.gl",
+                                           label="Display per million people",
+                                           value=FALSE),
+                             tags$hr(),
+                             "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                             tags$hr(),
+                             "Mar 25: original release", tags$br(),
+                             "Apr 16: most optimistic for US", tags$br(),
+                             "May 04: most pessimistic for US", tags$br(),
+                             paste0(latest.mod.bd, ":"), "most recent"
+                         ),
+                         mainPanel(plotOutput(outputId="country.d", width="100%"))
+                     )
+            ),
+            tabPanel("Cases",
+                     tags$h3("How are", tags$b("confirmed cases"), "changing among countries?"),
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="c.country",
+                                         label="Choose a country",
+                                         choices=sort(unique(obs$obs.c.gl$Country)),
+                                         selected="US"),
+                             checkboxGroupInput(inputId="c.modSource.gl",
+                                                label="Select models to show",
+                                                choices=c("MIT"),
+                                                selected=c("MIT"),
+                                                inline=TRUE),
+                             dateRangeInput(inputId="c.dates.gl",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end=Sys.Date()+14,
+                                            min="2020-01-03", max=Sys.Date()+14),
+                             checkboxInput(inputId="c.pK.gl",
+                                           label="Display per million people",
+                                           value=FALSE),
+                             tags$hr(),
+                             "The", tags$b("points"), "show reported cases, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
+                         ),
+                         mainPanel(plotOutput(outputId="country.c", width="100%"))
+                     )
+            ),
+            tabPanel("Compare",
+                     tags$h3("How do countries compare?"),
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="comp.country",
+                                         label="Choose countries to show",
+                                         choices=sort(unique(obs$obs.c.gl$Country)),
+                                         selected=c("Switzerland", "Italy", "US"),
+                                         multiple=TRUE),
+                             dateRangeInput(inputId="comp.dates.gl",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end=Sys.Date(),
+                                            min="2020-01-03", max=Sys.Date()),
+                             checkboxInput(inputId="comp.pK.gl",
+                                           label="Display per million people",
+                                           value=TRUE),
+                             tags$hr(),
+                             "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
+                         ),
+                         mainPanel(plotOutput(outputId="country.comp", width="100%"))
+                     )
             )
         ),
-        tabPanel("Cases",
-            tags$h3("How are", tags$b("confirmed cases"), "changing among countries?"),
-            sidebarLayout(
-                sidebarPanel(
-                    selectInput(inputId="c.country",
-                                label="Choose a country",
-                                choices=sort(unique(obs$obs.c.gl$Country)),
-                                selected="US"),
-                    dateRangeInput(inputId="c.dates.gl",
-                                   label="Choose dates to display",
-                                   start="2020-03-01", end=Sys.Date()+14,
-                                   min="2020-01-03", max=Sys.Date()+14),
-                    checkboxInput(inputId="c.pK.gl",
-                                  label="Display per million people",
-                                  value=FALSE),
-                    tags$hr(),
-                    "The", tags$b("points"), "show reported cases, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
-                ),
-                mainPanel(plotOutput(outputId="country.c", width="100%"))
+        navbarMenu("US States",
+            tabPanel("Deaths",
+                     tags$h3("How well have models predicted", tags$b("mortality"), "for US states?"), 
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="d.state",
+                                         label="Choose a state",
+                                         choices=sort(unique(obs$us.df$State)),
+                                         selected="Colorado"),
+                             checkboxGroupInput(inputId="d.modSource.us",
+                                                label="Select models to show",
+                                                choices=c("IHME", "MIT"),
+                                                selected=c("IHME", "MIT"),
+                                                inline=TRUE),
+                             selectInput(inputId="d.modDates.us",
+                                         label="Choose model releases to show",
+                                         choices=setNames(unique(obs$us.df$model_date),
+                                                          as.Date(unique(obs$us.df$model_date),
+                                                                  format="%Y_%m_%d") %>%
+                                                              format("%b %d")),
+                                         selected=c("2020_03_25", "2020_05_04",
+                                                    "2020_04_16", latest.mod.Ymd),
+                                         multiple=TRUE),
+                             dateRangeInput(inputId="d.dates.us",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end="2020-07-01",
+                                            min="2020-01-03", max="2020-08-04"),
+                             checkboxInput(inputId="d.pK.us",
+                                           label="Display per 10,000 people",
+                                           value=FALSE),
+                             tags$hr(),
+                             "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                             tags$hr(),
+                             "Mar 25: original release", tags$br(),
+                             "Apr 16: most optimistic for US", tags$br(),
+                             "May 04: most pessimistic for US", tags$br(),
+                             paste0(latest.mod.bd, ":"), "most recent"
+                         ),
+                         mainPanel(plotOutput(outputId="state.d", width="100%"))
+                     )
+            ),
+            tabPanel("Cases",
+                     tags$h3("How are", tags$b("confirmed cases"), "changing among US states?"),
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="c.state",
+                                         label="Choose a state",
+                                         choices=sort(unique(obs$us.df$State)),
+                                         selected="Colorado"),
+                             checkboxGroupInput(inputId="c.modSource.us",
+                                                label="Select models to show",
+                                                choices=c("MIT"),
+                                                selected=c("MIT"),
+                                                inline=TRUE),
+                             dateRangeInput(inputId="c.dates.us",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end=Sys.Date()+14,
+                                            min="2020-01-03", max=Sys.Date()+14),
+                             checkboxInput(inputId="c.pK.us",
+                                           label="Display per 10,000 people",
+                                           value=FALSE),
+                             tags$hr(),
+                             "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
+                         ),
+                         mainPanel(plotOutput(outputId="state.c", width="100%")),
+                     )
+            ),
+            tabPanel("Compare",
+                     tags$h3("How do states compare?"),
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="comp.state",
+                                         label="Choose states to show",
+                                         choices=sort(unique(obs$obs.c.us$State)),
+                                         selected=c("Colorado", "Georgia", "Illinois"),
+                                         multiple=TRUE),
+                             dateRangeInput(inputId="comp.dates.us",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end=Sys.Date(),
+                                            min="2020-01-03", max=Sys.Date()),
+                             checkboxInput(inputId="comp.pK.us",
+                                           label="Display per 10k people",
+                                           value=TRUE),
+                             tags$hr(),
+                             "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
+                         ),
+                         mainPanel(plotOutput(outputId="state.comp", width="100%"))
+                     )
             )
         ),
-        tabPanel("Compare",
-            tags$h3("How do countries compare?"),
-            sidebarLayout(
-                sidebarPanel(
-                    selectInput(inputId="comp.country",
-                                label="Choose countries to show",
-                                choices=sort(unique(obs$obs.c.gl$Country)),
-                                selected=c("Switzerland", "Italy", "US"),
-                                multiple=TRUE),
-                    dateRangeInput(inputId="comp.dates.gl",
-                                   label="Choose dates to display",
-                                   start="2020-03-01", end=Sys.Date(),
-                                   min="2020-01-03", max=Sys.Date()),
-                    checkboxInput(inputId="comp.pK.gl",
-                                  label="Display per million people",
-                                  value=TRUE),
-                    tags$hr(),
-                    "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
-                ),
-                mainPanel(plotOutput(outputId="country.comp", width="100%"))
+        navbarMenu(title="Peaks",
+            tabPanel("Deaths",
+                     tags$h3("Which weeks have had the", tags$b("most deaths"), "so far?"),
+                     fluidRow(
+                         column(6, tags$img(src="country_d_peak.png",
+                                            width=500, height=900)),
+                         column(6, tags$img(src="states_d_peak.png",
+                                            width=500, height=900))
+                     )
+            ),
+            tabPanel("Cases",
+                     tags$h3("Which weeks have had the", tags$b("most new cases"), "so far?"),
+                     fluidRow(
+                         column(6, tags$img(src="country_c_peak.png",
+                                            width=500, height=900)),
+                         column(6, tags$img(src="states_c_peak.png",
+                                            width=500, height=900))
+                     )
             )
+        ),
+        
+        tabPanel("About",
+                 fluidRow(column(6, offset=3, align="center", 
+                                 "This site allows you to compare the mortality predicted by COVID-19 models with the mortality we've actually seen so far, see the trend in number of confirmed cases, and compare the patterns among countries or US states.", 
+                                 tags$br(), 
+                                 tags$br(), 
+                                 "The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME), also known as the 'Chris Murray models', originally used a simple curve-fitting approach, but have built in additional complexity with time. The", tags$a("MIT", href="https://www.covidanalytics.io/projections"), "model uses machine-learning techniques along with a more traditional SEIR disease model.",
+                                 tags$br(), 
+                                 tags$br(), 
+                                 "The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models approximately twice each week, while both MIT and Johns Hopkins releases new predictions or data each day. No corrections have been made for testing effort.")),
+                 tags$hr(),
+                 fluidRow(column(12, align="center",
+                                 tags$br(),
+                                 "All code is published on",
+                                 tags$a("GitHub", href="https://github.com/Sz-Tim/COVID19-IHME"),
+                                 tags$br(),
+                                 "Created by ",
+                                 tags$a("Tim Szewczyk", href="https://sz-tim.github.io/about/")
+                 ))
         )
-    ),
-    navbarMenu("US States",
-        tabPanel("Deaths",
-            tags$h3("How well have the", tags$a("IHME", href="http://www.healthdata.org/covid/data-downloads"), "models predicted", tags$b("mortality"), "for US states?"), 
-            sidebarLayout(
-                sidebarPanel(
-                    selectInput(inputId="d.state",
-                                label="Choose a state",
-                                choices=sort(unique(obs$us.df$State)),
-                                selected="Colorado"),
-                    selectInput(inputId="d.modDates.us",
-                                label="Choose model releases to show",
-                                choices=setNames(unique(obs$us.df$model_date),
-                                                 as.Date(unique(obs$us.df$model_date),
-                                                         format="%Y_%m_%d") %>%
-                                                     format("%b %d")),
-                                selected=c("2020_03_25", "2020_05_04",
-                                           "2020_04_16", latest.mod.Ymd),
-                                multiple=TRUE),
-                    dateRangeInput(inputId="d.dates.us",
-                                   label="Choose dates to display",
-                                   start="2020-03-01", end="2020-07-01",
-                                   min="2020-01-03", max="2020-08-04"),
-                    checkboxInput(inputId="d.pK.us",
-                                  label="Display per 10,000 people",
-                                  value=FALSE),
-                    tags$hr(),
-                    "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
-                    tags$hr(),
-                    "Mar 25: original release", tags$br(),
-                    "Apr 16: most optimistic for US", tags$br(),
-                    "May 04: most pessimistic for US", tags$br(),
-                    paste0(latest.mod.bd, ":"), "most recent"
-                ),
-                mainPanel(plotOutput(outputId="state.d", width="100%"))
-            )
-        ),
-        tabPanel("Cases",
-            tags$h3("How are", tags$b("confirmed cases"), "changing among US states?"),
-                sidebarLayout(
-                    sidebarPanel(
-                        selectInput(inputId="c.state",
-                                    label="Choose a state",
-                                    choices=sort(unique(obs$us.df$State)),
-                                    selected="Colorado"),
-                        dateRangeInput(inputId="c.dates.us",
-                                       label="Choose dates to display",
-                                       start="2020-03-01", end=Sys.Date()+14,
-                                       min="2020-01-03", max=Sys.Date()+14),
-                        checkboxInput(inputId="c.pK.us",
-                                      label="Display per 10,000 people",
-                                      value=FALSE),
-                        tags$hr(),
-                        "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
-                    ),
-                    mainPanel(plotOutput(outputId="state.c", width="100%")),
-                )
-        ),
-        tabPanel("Compare",
-                 tags$h3("How do states compare?"),
-                 sidebarLayout(
-                     sidebarPanel(
-                         selectInput(inputId="comp.state",
-                                     label="Choose states to show",
-                                     choices=sort(unique(obs$obs.c.us$State)),
-                                     selected=c("Colorado", "Georgia", "Illinois"),
-                                     multiple=TRUE),
-                         dateRangeInput(inputId="comp.dates.us",
-                                        label="Choose dates to display",
-                                        start="2020-03-01", end=Sys.Date(),
-                                        min="2020-01-03", max=Sys.Date()),
-                         checkboxInput(inputId="comp.pK.us",
-                                       label="Display per 10k people",
-                                       value=TRUE),
-                         tags$hr(),
-                         "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
-                     ),
-                     mainPanel(plotOutput(outputId="state.comp", width="100%"))
-                 )
-        )
-    ),
-    navbarMenu(title="Peaks",
-        tabPanel("Deaths",
-            tags$h3("Which weeks have had the", tags$b("most deaths"), "so far?"),
-            fluidRow(
-                column(6, tags$img(src="country_d_peak.png",
-                                   width=500, height=900)),
-                column(6, tags$img(src="states_d_peak.png",
-                                   width=500, height=900))
-            )
-        ),
-        tabPanel("Cases",
-            tags$h3("Which weeks have had the", tags$b("most new cases"), "so far?"),
-            fluidRow(
-                column(6, tags$img(src="country_c_peak.png",
-                                   width=500, height=900)),
-                column(6, tags$img(src="states_c_peak.png",
-                                   width=500, height=900))
-            )
-        )
-    ),
-    
-    tabPanel("About",
-             "The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME), also known as the 'Chris Murray models', have been used for planning purposes by many US states and by the US federal government. This site allows you to compare the mortality predicted by their models with the mortality we've actually seen so far, see the trend in number of confirmed cases, and compare the patterns among countries or US states. The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models approximately twice each week, and Johns Hopkins releases new data each day. No corrections have been made for testing effort.",
-             tags$hr(),
-             fluidRow(column(12, align="center",
-                tags$br(),
-                "All code is published on",
-                tags$a("GitHub", href="https://github.com/Sz-Tim/COVID19-IHME"),
-                tags$br(),
-                "Created by ",
-                tags$a("Tim Szewczyk", href="https://sz-tim.github.io/about/")
-             ))
-    )
 )
 
 # Define server logic required to draw a histogram
@@ -232,7 +259,7 @@ server <- function(input, output) {
                 select(-pop, -wDay, -Deaths.obs)
         ) %>% arrange(desc(span), Type) %>%
             mutate(SpanType=factor(paste(span, Type), 
-                                     levels=c(unique(paste(span, Type)))))
+                                   levels=c(unique(paste(span, Type)))))
     })
     obs.lab.comp.gl <- reactive({
         tibble(SpanType=factor(levels(obs.comp.gl()$SpanType)[1], 
@@ -241,13 +268,20 @@ server <- function(input, output) {
                obs=max(obs.comp.gl()$obs),
                lab=ifelse(input$comp.pK.gl, "per million", ""))
     })
+    c.mit.gl.i <- reactive({
+        obs$mit.gl %>%
+            filter(Country==input$c.country &
+                       Date >= input$c.dates.gl[1] & Date <= input$c.dates.gl[2]) %>%
+            mutate(Cases=ifelse(rep(input$c.pK.gl, n()), Cases/pop, Cases),
+                   modType="MIT")
+    })
     obs.c.gl.i <- reactive({
         obs$obs.c.gl %>% ungroup %>%
             filter(Country==input$c.country & !is.na(Cases.obs) &
                        Date >= input$c.dates.gl[1] & Date <= input$c.dates.gl[2]) %>%
             mutate(src="Average",
                    Cases.obs=ifelse(rep(input$c.pK.gl, n()), 
-                                     Cases.obs/pop, Cases.obs))
+                                    Cases.obs/pop, Cases.obs))
     })
     obs.max.c.gl.i <- reactive({
         obs$obs.c.gl.max %>% filter(Country==input$c.country) %>%
@@ -258,9 +292,9 @@ server <- function(input, output) {
         tibble(span=c("Total", "Daily"), lab.size=c(6,5),
                Date=c(input$c.dates.gl[1], obs.max.c.gl.i()$Date),
                Cases=c(max(c(filter(obs.c.gl.i(), span=="Total")$Cases.obs), 
-                            na.rm=T),
-                        max(c(filter(obs.c.gl.i(), span=="Daily")$Cases.obs), 
-                            na.rm=T)*1.07),
+                           na.rm=T),
+                       max(c(filter(obs.c.gl.i(), span=="Daily")$Cases.obs), 
+                           na.rm=T)*1.07),
                lab=c(paste0(input$c.country, "\n", 
                             c("", "(per million)")[input$c.pK.gl+1]),
                      paste("7-day peak:\n", format(obs.max.c.gl.i()$Date, "%b %d"))))
@@ -289,6 +323,13 @@ server <- function(input, output) {
                                      Deaths.obs/pop, Deaths.obs),
                    Deaths=ifelse(rep(input$d.pK.gl, n()), Deaths/pop, Deaths))
     })
+    d.mit.gl.i <- reactive({
+        obs$mit.gl %>%
+            filter(Country==input$d.country &
+                       Date >= input$d.dates.gl[1] & Date <= input$d.dates.gl[2]) %>%
+            mutate(Deaths=ifelse(rep(input$d.pK.gl, n()), Deaths/pop, Deaths),
+                   modType="MIT")
+    })
     d.gl.i.starts <- reactive({
         d.gl.i() %>% 
             filter(Date==as.Date(model_date, format="%Y_%m_%d") &
@@ -300,9 +341,9 @@ server <- function(input, output) {
                Deaths=c(max(c(filter(d.gl.i(), span=="Total")$Deaths),
                             c(filter(obs.d.gl.i(), span=="Total")$Deaths.obs), 
                             na.rm=T),
-                            max(c(filter(d.gl.i(), span=="Daily")$Deaths),
-                                c(filter(obs.d.gl.i(), span=="Daily")$Deaths.obs), 
-                                na.rm=T)*1.07),
+                        max(c(filter(d.gl.i(), span=="Daily")$Deaths),
+                            c(filter(obs.d.gl.i(), span=="Daily")$Deaths.obs), 
+                            na.rm=T)*1.07),
                lab=c(paste0(input$d.country, "\n", 
                             c("", "(per million)")[input$d.pK.gl+1]),
                      paste("7-day peak:", format(obs.max.d.gl.i()$Date, "%b %d"))))
@@ -338,6 +379,13 @@ server <- function(input, output) {
                Date=input$comp.dates.us[1], 
                obs=max(obs.comp.us()$obs),
                lab=ifelse(input$comp.pK.us, "per 10k", ""))
+    })
+    c.mit.us.i <- reactive({
+        obs$mit.us %>%
+            filter(State==input$c.state &
+                       Date >= input$c.dates.us[1] & Date <= input$c.dates.us[2]) %>%
+            mutate(Cases=ifelse(rep(input$c.pK.us, n()), Cases/pop, Cases),
+                   modType="MIT")
     })
     obs.c.us.i <- reactive({
         obs$obs.c.us %>% ungroup %>%
@@ -387,6 +435,13 @@ server <- function(input, output) {
                                      Deaths.obs/pop, Deaths.obs),
                    Deaths=ifelse(rep(input$d.pK.us, n()), Deaths/pop, Deaths))
     })
+    d.mit.us.i <- reactive({
+        obs$mit.us %>%
+            filter(State==input$d.state &
+                       Date >= input$d.dates.us[1] & Date <= input$d.dates.us[2]) %>%
+            mutate(Deaths=ifelse(rep(input$d.pK.us, n()), Deaths/pop, Deaths),
+                   modType="MIT")
+    })
     d.us.i.starts <- reactive({
         d.us.i() %>%
             filter(Date==as.Date(model_date, format="%Y_%m_%d") &
@@ -411,6 +466,10 @@ server <- function(input, output) {
     output$country.c <- renderPlot({
         ggplot(obs.c.gl.i(), aes(Date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
+            {if("MIT" %in% input$c.modSource.gl) {
+                geom_line(data=c.mit.gl.i(), aes(y=Cases, linetype=modType),
+                          size=1, colour="black")
+            }} +
             geom_line(data=obs.c.gl.i(), aes(y=Cases.obs, alpha=src), method="loess", 
                       stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
             geom_vline(data=obs.max.c.gl.i(), aes(xintercept=Date), linetype=3) +
@@ -421,11 +480,13 @@ server <- function(input, output) {
                        size=2, shape=21) + 
             geom_rug(data=filter(obs.c.gl.i(), Date==last(Date) & span=="Total"), 
                      aes(y=Cases.obs), colour="black", sides="r") +
+            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+                                  guide=guide_legend(order=1)) +
+            scale_fill_brewer("Observed", type="div", palette=1,
+                              guide=guide_legend(order=2)) +
             scale_alpha_manual("", values=0.4,
                                guide=guide_legend(order=3,
                                                   title.position="bottom")) +
-            scale_fill_brewer("Observed", type="div", palette=1,
-                              guide=guide_legend(order=2)) +
             xlim(as.Date(input$c.dates.gl[1]),
                  as.Date(input$c.dates.gl[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
@@ -444,9 +505,17 @@ server <- function(input, output) {
     output$country.d <- renderPlot({
         ggplot(d.gl.i(), aes(Date, Deaths, colour=model_date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            geom_line(aes(group=model_date), size=1) + 
-            geom_text(data=d.gl.i.starts(), aes(group=model_date),
-                       label="|", size=5, fontface="bold", family="mono") +
+            {if("MIT" %in% input$d.modSource.gl) {
+                geom_line(data=d.mit.gl.i(), aes(y=Deaths, linetype=modType),
+                          size=1, colour="black")
+            }} +
+            {if("IHME" %in% input$d.modSource.gl) {
+                geom_text(data=d.gl.i.starts(), aes(group=model_date),
+                          label="|", size=5, fontface="bold", family="mono")
+            }} +
+            {if("IHME" %in% input$d.modSource.gl) {
+                geom_line(data=d.gl.i(), aes(group=model_date), size=1)
+            }} +
             geom_line(data=obs.d.gl.i(), aes(y=Deaths.obs, alpha=src), 
                       method="loess", stat="smooth",
                       colour=1, size=1.5, span=0.6, formula=y~x) + 
@@ -458,16 +527,18 @@ server <- function(input, output) {
                      aes(y=Deaths.obs), colour="black", sides="r") +
             geom_point(data=obs.d.gl.i(), aes(y=Deaths.obs, fill=wDay), 
                        colour="black", size=2, shape=21) + 
-            scale_colour_viridis_d("Model Date",
-                                 labels=as.Date(unique(d.gl.i()$model_date), 
-                                                format="%Y_%m_%d") %>%
-                                     format("%b %d"),
-                                 guide=guide_legend(order=1)) +
-            scale_alpha_manual("", values=0.4,
-                               guide=guide_legend(order=3,
-                                                  title.position="bottom")) +
+            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+                                  guide=guide_legend(order=1)) +
+            scale_colour_viridis_d("IHME Model",
+                                   labels=as.Date(unique(d.gl.i()$model_date), 
+                                                  format="%Y_%m_%d") %>%
+                                       format("%b %d"),
+                                   guide=guide_legend(order=2)) +
             scale_fill_brewer("\n\n\nObserved", type="div", 
-                              guide=guide_legend(order=2)) +
+                              guide=guide_legend(order=3)) +
+            scale_alpha_manual("", values=0.4,
+                               guide=guide_legend(order=4,
+                                                  title.position="bottom")) +
             xlim(as.Date(input$d.dates.gl[1]),
                  as.Date(input$d.dates.gl[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
@@ -515,6 +586,10 @@ server <- function(input, output) {
     output$state.c <- renderPlot({
         ggplot(obs.c.us.i(), aes(Date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
+            {if("MIT" %in% input$c.modSource.us) {
+                geom_line(data=c.mit.us.i(), aes(y=Cases, linetype=modType),
+                          size=1, colour="black")
+            }} +
             geom_line(data=obs.c.us.i(), aes(y=Cases.obs, alpha=src), method="loess", 
                       stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
             geom_vline(data=obs.max.c.us.i(), aes(xintercept=Date), linetype=3) +
@@ -525,11 +600,13 @@ server <- function(input, output) {
                      aes(y=Cases.obs), colour="black", sides="r") +
             geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
                        size=2, shape=21) + 
+            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+                                  guide=guide_legend(order=1)) +
+            scale_fill_brewer("Observed", type="div", 
+                              guide=guide_legend(order=2)) +
             scale_alpha_manual("", values=0.4,
                                guide=guide_legend(order=3,
                                                   title.position="bottom")) +
-            scale_fill_brewer("Observed", type="div", 
-                              guide=guide_legend(order=2)) +
             xlim(as.Date(input$c.dates.us[1]),
                  as.Date(input$c.dates.us[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
@@ -549,9 +626,17 @@ server <- function(input, output) {
     output$state.d <- renderPlot({
         ggplot(d.us.i(), aes(Date, Deaths, colour=model_date)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            geom_line(aes(group=model_date), size=1) +
-            geom_text(data=d.us.i.starts(), aes(group=model_date),
-                      label="|", size=5, fontface="bold", family="mono") +
+            {if("MIT" %in% input$d.modSource.us) {
+                geom_line(data=d.mit.us.i(), aes(y=Deaths, linetype=modType),
+                          size=1, colour="black")
+            }} +
+            {if("IHME" %in% input$d.modSource.us) {
+                geom_text(data=d.us.i.starts(), aes(group=model_date),
+                          label="|", size=5, fontface="bold", family="mono")
+            }} +
+            {if("IHME" %in% input$d.modSource.us) {
+                geom_line(data=d.us.i(), aes(group=model_date), size=1)
+            }} +
             geom_line(data=obs.d.us.i(), aes(y=Deaths.obs, alpha=src),
                       method="loess", stat="smooth",
                       colour=1, size=1.5, span=0.6, formula=y~x) +
@@ -563,16 +648,18 @@ server <- function(input, output) {
                      aes(y=Deaths.obs), colour="black", sides="r") +
             geom_point(data=obs.d.us.i(), aes(y=Deaths.obs, fill=wDay),
                        colour="black", size=2, shape=21) +
-            scale_colour_viridis_d("Model Date",
+            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+                                  guide=guide_legend(order=1)) +
+            scale_colour_viridis_d("IHME Model",
                                    labels=as.Date(unique(d.us.i()$model_date), 
                                                   format="%Y_%m_%d") %>%
                                        format("%b %d"),
-                                   guide=guide_legend(order=1)) +
-            scale_alpha_manual(NULL, values=0.4,
-                               guide=guide_legend(order=3,
-                                                  title.position="bottom")) +
+                                   guide=guide_legend(order=2)) +
             scale_fill_brewer("\n\n\nObserved", type="div", 
-                              guide=guide_legend(order=2)) +
+                              guide=guide_legend(order=3)) +
+            scale_alpha_manual(NULL, values=0.4,
+                               guide=guide_legend(order=4,
+                                                  title.position="bottom")) +
             xlim(as.Date(input$d.dates.us[1]),
                  as.Date(input$d.dates.us[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") +
