@@ -426,8 +426,8 @@ server <- function(input, output) {
                                                   title.position="bottom")) +
             scale_fill_brewer("Observed", type="div", palette=1,
                               guide=guide_legend(order=2)) +
-            xlim(as.Date(input$c.dates.gl[1], format="%Y_%m_%d"),
-                 as.Date(input$c.dates.gl[2], format="%Y_%m_%d")) +
+            xlim(as.Date(input$c.dates.gl[1]),
+                 as.Date(input$c.dates.gl[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
             labs(x="", y="") +
             facet_grid(factor(span, levels=c("Total", "Daily"))~., 
@@ -468,8 +468,8 @@ server <- function(input, output) {
                                                   title.position="bottom")) +
             scale_fill_brewer("\n\n\nObserved", type="div", 
                               guide=guide_legend(order=2)) +
-            xlim(as.Date(input$d.dates.gl[1], format="%Y_%m_%d"),
-                 as.Date(input$d.dates.gl[2], format="%Y_%m_%d")) +
+            xlim(as.Date(input$d.dates.gl[1]),
+                 as.Date(input$d.dates.gl[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
             labs(x="", y="") +
             facet_grid(factor(span, levels=c("Total", "Daily"))~., 
@@ -491,14 +491,14 @@ server <- function(input, output) {
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
             geom_line(aes(group=Country), stat="smooth", method="loess", 
                       span=0.6, formula=y~x, size=1) +
-            geom_rug(data=filter(obs.comp.gl(), Date==last(Date)), 
-                     sides="r") +
+            geom_text(data=filter(obs.comp.gl(), Date==last(Date)), 
+                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
             geom_point(alpha=0.5, size=1) + 
-            scale_colour_viridis_d("", end=0.9, option="plasma") +
+            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
             scale_y_continuous(labels=pretty_numbers, position="right",
                                limits=c(0,NA)) + 
-            xlim(as.Date(input$comp.dates.gl[1], format="%Y_%m_%d"),
-                 as.Date(input$comp.dates.gl[2], format="%Y_%m_%d")) +
+            xlim(as.Date(input$comp.dates.gl[1]),
+                 as.Date(input$comp.dates.gl[2])+4) +
             facet_wrap(~SpanType, scales="free_y") +
             labs(x="", y="") + 
             theme(axis.text=element_text(size=13),
@@ -530,8 +530,8 @@ server <- function(input, output) {
                                                   title.position="bottom")) +
             scale_fill_brewer("Observed", type="div", 
                               guide=guide_legend(order=2)) +
-            xlim(as.Date(input$c.dates.us[1], format="%Y_%m_%d"),
-                 as.Date(input$c.dates.us[2], format="%Y_%m_%d")) +
+            xlim(as.Date(input$c.dates.us[1]),
+                 as.Date(input$c.dates.us[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
             labs(x="", y="") +
             facet_grid(factor(span, levels=c("Total", "Daily"))~., 
@@ -573,8 +573,8 @@ server <- function(input, output) {
                                                   title.position="bottom")) +
             scale_fill_brewer("\n\n\nObserved", type="div", 
                               guide=guide_legend(order=2)) +
-            xlim(as.Date(input$d.dates.us[1], format="%Y_%m_%d"),
-                 as.Date(input$d.dates.us[2], format="%Y_%m_%d")) +
+            xlim(as.Date(input$d.dates.us[1]),
+                 as.Date(input$d.dates.us[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") +
             labs(x="", y="") +
             facet_grid(factor(span, levels=c("Total", "Daily"))~., 
@@ -596,13 +596,14 @@ server <- function(input, output) {
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
             geom_line(aes(group=State), stat="smooth", method="loess", 
                       span=0.6, formula=y~x, size=1) +
-            geom_rug(data=filter(obs.comp.us(), Date==last(Date)), sides="r") +
+            geom_text(data=filter(obs.comp.us(), Date==last(Date)), 
+                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
             geom_point(alpha=0.5, size=1) + 
-            scale_colour_viridis_d("", end=0.9, option="plasma") +
+            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
             scale_y_continuous(labels=pretty_numbers, position="right",
                                limits=c(0,NA)) + 
-            xlim(as.Date(input$comp.dates.us[1], format="%Y_%m_%d"),
-                 as.Date(input$comp.dates.us[2], format="%Y_%m_%d")) +
+            xlim(as.Date(input$comp.dates.us[1]),
+                 as.Date(input$comp.dates.us[2]+4)) +
             facet_wrap(~SpanType, scales="free_y") +
             labs(x="", y="") + 
             theme(axis.text=element_text(size=13),

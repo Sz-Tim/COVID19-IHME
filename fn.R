@@ -48,6 +48,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
   ts.url <- paste0(jhu.repo, "csse_covid_19_data/csse_covid_19_time_series/")
   pop.gl <- read_csv("countryPops.csv") %>% mutate(pop_pK=Population/1e6)
   pop.us <- read_csv("statePops.csv") %>% mutate(pop_pK=Population/1e4)
+  abbr.gl <- read_csv("countryCodes.csv", na=character())
+  abbr.us <- read_csv("stateCodes.csv")
   
   
   #--- IHME data ---------------------------------------------------------------
@@ -65,7 +67,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     mutate(Country=as.character(Country),
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Deaths.obs") %>%
-    mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)])
+    mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   obs.d.gl.max <- obs.d.gl %>% filter(Country != "Diamond Princess") %>%
     group_by(Country) %>% 
     filter(!is.na(Deaths.obs) & span=="Daily") %>% arrange(Country, Date) %>% 
@@ -74,7 +77,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            obs.l5=lag(Deaths.obs, 5), obs.l6=lag(Deaths.obs, 6),
            mn_7d=(Deaths.obs+obs.l1+obs.l2+obs.l3+obs.l4+obs.l5+obs.l6)/7) %>%
     filter(!is.na(mn_7d)) %>% arrange(Country, mn_7d) %>% group_by(Country) %>% 
-    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop))
+    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop), abbr=first(abbr))
   obs.c.gl <- read.csv(paste0(ts.url, "time_series_covid19_confirmed_global.csv")) %>%
     pivot_longer(13:ncol(.), names_to="Date", values_to="deaths") %>%
     mutate(Date=lubridate::mdy(str_sub(Date, 2, -1L)),
@@ -85,7 +88,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     mutate(Country=as.character(Country),
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Cases.obs") %>%
-    mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)])
+    mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   obs.c.gl.max <- obs.c.gl %>% filter(Country != "Diamond Princess") %>%
     group_by(Country) %>% 
     filter(!is.na(Cases.obs) & span=="Daily") %>% arrange(Country, Date) %>% 
@@ -94,7 +98,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            obs.l5=lag(Cases.obs, 5), obs.l6=lag(Cases.obs, 6),
            mn_7d=(Cases.obs+obs.l1+obs.l2+obs.l3+obs.l4+obs.l5+obs.l6)/7) %>%
     filter(!is.na(mn_7d)) %>% arrange(Country, mn_7d) %>% group_by(Country) %>% 
-    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop))
+    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop), abbr=first(abbr))
   gl.df <- full_join(filter(ihme.df, Country %in% obs.d.gl$Country & 
                                 Country != "Georgia"), 
                        filter(obs.d.gl, Country %in% ihme.df$Country), 
@@ -102,7 +106,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     filter(!is.na(model_date)) %>%
     mutate(modelDate=as.Date(model_date, format="%Y_%m_%d") %>%
              format("%b %d")) %>%
-    mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)])
+    mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   
   
   #--- US States ---------------------------------------------------------------
@@ -116,7 +121,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     mutate(State=as.character(State),
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Deaths.obs") %>%
-    mutate(pop=pop.us$pop_pK[match(State, pop.us$State)])
+    mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           abbr=abbr.us$Code[match(State, abbr.us$State)])
   obs.d.us.max <- obs.d.us %>% 
     filter(State %in% c(state.name, "Puerto Rico", "District of Columbia")) %>% 
     group_by(State) %>% 
@@ -126,7 +132,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            obs.l5=lag(Deaths.obs, 5), obs.l6=lag(Deaths.obs, 6),
            mn_7d=(Deaths.obs+obs.l1+obs.l2+obs.l3+obs.l4+obs.l5+obs.l6)/7) %>%
     filter(!is.na(mn_7d)) %>% arrange(State, mn_7d) %>% group_by(State) %>% 
-    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop))
+    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop), abbr=first(abbr))
   obs.c.us <- read.csv(paste0(ts.url, "time_series_covid19_confirmed_US.csv")) %>%
     pivot_longer(13:ncol(.), names_to="Date", values_to="deaths") %>%
     mutate(Date=lubridate::mdy(str_sub(Date, 2, -1L)),
@@ -137,7 +143,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     mutate(State=as.character(State),
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Cases.obs") %>%
-    mutate(pop=pop.us$pop_pK[match(State, pop.us$State)])
+    mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           abbr=abbr.us$Code[match(State, abbr.us$State)])
   obs.c.us.max <- obs.c.us %>% 
     filter(State %in% c(state.name, "Puerto Rico", "District of Columbia")) %>% 
     group_by(State) %>% 
@@ -147,12 +154,13 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            obs.l5=lag(Cases.obs, 5), obs.l6=lag(Cases.obs, 6),
            mn_7d=(Cases.obs+obs.l1+obs.l2+obs.l3+obs.l4+obs.l5+obs.l6)/7) %>%
     filter(!is.na(mn_7d)) %>% arrange(State, mn_7d) %>% group_by(State) %>% 
-    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop))
+    summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop), abbr=first(abbr))
   us.df <- full_join(ihme.df %>% rename(State=Country) %>% 
                        filter(State %in% unique(obs.d.us$State)), 
                      filter(obs.d.us, State %in% unique(ihme.df$Country)), 
                      by=c("State", "Date", "span")) %>% group_by(State) %>%
-    mutate(pop=pop.us$pop_pK[match(State, pop.us$State)])
+    mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           abbr=abbr.us$Code[match(State, abbr.us$State)])
   
   return(list(obs.d.gl=obs.d.gl, obs.d.gl.max=obs.d.gl.max, 
               obs.c.gl=obs.c.gl, obs.c.gl.max=obs.c.gl.max,
