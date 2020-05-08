@@ -279,6 +279,38 @@ refresh_peak_plots <- function(obs) {
     labs(x="", y="", title="Countries") 
   ggsave("www/country_c_peak.png", country.c, width=7.5, height=13.5, units="in")
   
+  date.comp.gl <- full_join(obs$obs.d.gl.max %>% 
+                              rename(Death.Date=Date, Death.obs=obs),
+                            obs$obs.c.gl.max %>%
+                              rename(Case.Date=Date, Case.obs=obs),
+                            by=c("Country", "abbr", "pop")) %>%
+    mutate(DaysDiff=as.numeric(Death.Date-Case.Date)) %>%
+    filter(!is.na(DaysDiff))
+  mn.days.gl <- mean(date.comp.gl$DaysDiff)
+  mn.daysG0.gl <- mean(filter(date.comp.gl, DaysDiff>0)$DaysDiff)
+  gl.max.y <- max(hist(date.comp.gl$DaysDiff, plot=F,
+                       breaks=seq(min(date.comp.gl$DaysDiff)-1, 
+                                  max(date.comp.gl$DaysDiff)+1, 
+                                  by=3))$count)
+  country.comp <- ggplot(date.comp.gl, aes(x=DaysDiff)) + 
+    geom_histogram(binwidth=3) +
+    geom_segment(aes(x=mn.days.gl, xend=mn.days.gl,
+                     y=0, yend=gl.max.y), linetype=2) +
+    geom_segment(aes(x=mn.daysG0.gl, xend=mn.daysG0.gl,
+                     y=0, yend=gl.max.y*0.8), linetype=2, colour="darkblue") +
+    annotate("text", size=5, hjust=0, vjust=1, x=mn.days.gl, y=gl.max.y, 
+             label=paste(" Average delay\n (all countries)\n ", 
+                         round(mn.days.gl, 1), "days")) +
+    annotate("text", size=5, hjust=0, vjust=1, x=mn.daysG0.gl, y=gl.max.y*0.8, 
+             label=paste(" Average delay\n (positive only)\n ", 
+                         round(mn.daysG0.gl, 1), "days"), colour="darkblue") +
+    theme(axis.text=element_text(size=14),
+          axis.title=element_text(size=16),
+          title=element_text(size=18)) +
+    labs(x="Days between case peak and death peak", 
+         y="Number of countries", title="Countries") 
+  ggsave("www/country_comp_peak.png", country.comp, width=7.25, height=7.5, units="in")
+  
   us.d <- obs$obs.d.us.max %>% 
     arrange(Date, desc(State)) %>% 
     mutate(State=factor(State, levels=unique(State))) %>%
@@ -348,5 +380,37 @@ refresh_peak_plots <- function(obs) {
           panel.grid.major.x=element_line(size=0.25, colour="gray90")) +
     labs(x="", y="", title="US States")
   ggsave("www/states_c_peak.png", us.c, width=7.5, height=13.5, units="in")
+  
+  date.comp.us <- full_join(obs$obs.d.us.max %>% 
+                              rename(Death.Date=Date, Death.obs=obs),
+                            obs$obs.c.us.max %>%
+                              rename(Case.Date=Date, Case.obs=obs),
+                            by=c("State", "abbr", "pop")) %>%
+    mutate(DaysDiff=as.numeric(Death.Date-Case.Date)) %>%
+    filter(!is.na(DaysDiff))
+  mn.days.us <- mean(date.comp.us$DaysDiff)
+  mn.daysG0.us <- mean(filter(date.comp.us, DaysDiff>0)$DaysDiff)
+  us.max.y <- max(hist(date.comp.us$DaysDiff, plot=F,
+                       breaks=seq(min(date.comp.us$DaysDiff)-1, 
+                                  max(date.comp.us$DaysDiff)+1, 
+                                  by=3))$count)
+  state.comp <- ggplot(date.comp.us, aes(x=DaysDiff)) + 
+    geom_histogram(binwidth=3) +
+    geom_segment(aes(x=mn.days.us, xend=mn.days.us,
+                     y=0, yend=us.max.y), linetype=2) +
+    geom_segment(aes(x=mn.daysG0.us, xend=mn.daysG0.us,
+                     y=0, yend=us.max.y*0.8), linetype=2, colour="darkblue") +
+    annotate("text", size=5, hjust=0, vjust=1, x=mn.days.us, y=us.max.y, 
+             label=paste(" Average delay\n (all states)\n ", 
+                         round(mn.days.us, 1), "days")) +
+    annotate("text", size=5, hjust=0, vjust=1, x=mn.daysG0.us, y=us.max.y*0.8, 
+             label=paste(" Average delay\n (positive only)\n ", 
+                         round(mn.daysG0.us, 1), "days"), colour="darkblue") +
+    theme(axis.text=element_text(size=14),
+          axis.title=element_text(size=16),
+          title=element_text(size=18)) +
+    labs(x="Days between case peak and death peak", 
+         y="Number of states", title="US States") 
+  ggsave("www/states_comp_peak.png", state.comp, width=7.25, height=7.5, units="in")
 } 
 

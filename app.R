@@ -197,19 +197,22 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
             tabPanel("Deaths",
                      tags$h3("Which weeks have had the", tags$b("most deaths"), "so far?"),
                      fluidRow(
-                         column(6, tags$img(src="country_d_peak.png",
-                                            width=500, height=900)),
-                         column(6, tags$img(src="states_d_peak.png",
-                                            width=500, height=900))
+                         column(6, tags$img(src="country_d_peak.png", width='95%')),
+                         column(6, tags$img(src="states_d_peak.png", width='95%'))
                      )
             ),
             tabPanel("Cases",
                      tags$h3("Which weeks have had the", tags$b("most new cases"), "so far?"),
                      fluidRow(
-                         column(6, tags$img(src="country_c_peak.png",
-                                            width=500, height=900)),
-                         column(6, tags$img(src="states_c_peak.png",
-                                            width=500, height=900))
+                         column(6, tags$img(src="country_c_peak.png", width='95%')),
+                         column(6, tags$img(src="states_c_peak.png", width='95%'))
+                     )
+            ),
+            tabPanel("Compare",
+                     tags$h3("How much time is between the peaks in", tags$b("new cases"), "and", tags$b("deaths"), "?"),
+                     fluidRow(
+                         column(6, tags$img(src="country_comp_peak.png", width='95%')),
+                         column(6, tags$img(src="states_comp_peak.png", width='95%'))
                      )
             )
         ),
