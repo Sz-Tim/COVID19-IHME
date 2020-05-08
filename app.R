@@ -468,7 +468,7 @@ server <- function(input, output) {
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
             {if("MIT" %in% input$c.modSource.gl) {
                 geom_line(data=c.mit.gl.i(), aes(y=Cases, linetype=modType),
-                          size=1, colour="black")
+                          size=1, colour="red")
             }} +
             geom_line(data=obs.c.gl.i(), aes(y=Cases.obs, alpha=src), method="loess", 
                       stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
@@ -507,7 +507,7 @@ server <- function(input, output) {
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
             {if("MIT" %in% input$d.modSource.gl) {
                 geom_line(data=d.mit.gl.i(), aes(y=Deaths, linetype=modType),
-                          size=1, colour="black")
+                          size=1, colour="red")
             }} +
             {if("IHME" %in% input$d.modSource.gl) {
                 geom_text(data=d.gl.i.starts(), aes(group=model_date),
@@ -588,7 +588,7 @@ server <- function(input, output) {
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
             {if("MIT" %in% input$c.modSource.us) {
                 geom_line(data=c.mit.us.i(), aes(y=Cases, linetype=modType),
-                          size=1, colour="black")
+                          size=1, colour="red")
             }} +
             geom_line(data=obs.c.us.i(), aes(y=Cases.obs, alpha=src), method="loess", 
                       stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
@@ -628,7 +628,7 @@ server <- function(input, output) {
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
             {if("MIT" %in% input$d.modSource.us) {
                 geom_line(data=d.mit.us.i(), aes(y=Deaths, linetype=modType),
-                          size=1, colour="black")
+                          size=1, colour="red")
             }} +
             {if("IHME" %in% input$d.modSource.us) {
                 geom_text(data=d.us.i.starts(), aes(group=model_date),
