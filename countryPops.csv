@@ -26,7 +26,7 @@ South Africa,Africa,Southern Africa,58558270
 Tanzania,Africa,Eastern Africa,58005463
 Myanmar,Asia,South-eastern Asia,54045420
 Kenya,Africa,Eastern Africa,52573973
-South Korea,Asia,Eastern Asia,51225308
+"Korea, South",Asia,Eastern Asia,51225308
 Colombia,Americas,South America,50339443
 Spain,Europe,Southern Europe,46736776
 Argentina,Americas,South America,44780677
@@ -54,7 +54,7 @@ North Korea,Asia,Eastern Asia,25666161
 Ivory Coast,Africa,Western Africa,25716544
 Cameroon,Africa,Middle Africa,25876380
 Australia,Oceania,Australia and New Zealand,25203198
-Taiwan,Asia,Eastern Asia,23773876
+Taiwan*,Asia,Eastern Asia,23773876
 Niger,Africa,Western Africa,23310715
 Sri Lanka,Asia,Southern Asia,21323733
 Burkina Faso,Africa,Western Africa,20321378
