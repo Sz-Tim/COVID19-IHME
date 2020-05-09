@@ -12,6 +12,10 @@ input <- list(d.country="US",
               c.dates.gl=c("2020-03-01", "2020-07-01"),
               c.pK.gl=F,
               
+              comp.country=c("US", "Korea, South"),
+              comp.dates.gl=as.Date(c("2020-03-01", "2020-05-08")),
+              comp.pK.gl=TRUE,
+              
               d.state="Colorado",
               d.modSource.us=c("IHME", "MIT"),
               d.modDates.us=c("2020_03_25", "2020_05_04",
@@ -24,4 +28,8 @@ input <- list(d.country="US",
               c.modDates.us=c("2020_03_25", "2020_05_04",
                               "2020_04_16"),
               c.dates.us=c("2020-03-01", "2020-07-01"),
-              c.pK.us=F)
+              c.pK.us=F,
+              
+              comp.state=c("Colorado", "Illinois", "Georgia"),
+              comp.dates.us=c("2020-03-01", Sys.Date()),
+              comp.pK.us=TRUE)
