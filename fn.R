@@ -289,8 +289,8 @@ refresh_peak_plots <- function(obs) {
   mn.days.gl <- mean(date.comp.gl$DaysDiff)
   mn.daysG0.gl <- mean(filter(date.comp.gl, DaysDiff>0)$DaysDiff)
   gl.max.y <- max(hist(date.comp.gl$DaysDiff, plot=F,
-                       breaks=seq(min(date.comp.gl$DaysDiff)-1, 
-                                  max(date.comp.gl$DaysDiff)+1, 
+                       breaks=seq(min(date.comp.gl$DaysDiff)-3, 
+                                  max(date.comp.gl$DaysDiff)+3, 
                                   by=3))$count)
   country.comp <- ggplot(date.comp.gl, aes(x=DaysDiff)) + 
     geom_histogram(binwidth=3) +
@@ -391,8 +391,8 @@ refresh_peak_plots <- function(obs) {
   mn.days.us <- mean(date.comp.us$DaysDiff)
   mn.daysG0.us <- mean(filter(date.comp.us, DaysDiff>0)$DaysDiff)
   us.max.y <- max(hist(date.comp.us$DaysDiff, plot=F,
-                       breaks=seq(min(date.comp.us$DaysDiff)-1, 
-                                  max(date.comp.us$DaysDiff)+1, 
+                       breaks=seq(min(date.comp.us$DaysDiff)-3, 
+                                  max(date.comp.us$DaysDiff)+3, 
                                   by=3))$count)
   state.comp <- ggplot(date.comp.us, aes(x=DaysDiff)) + 
     geom_histogram(binwidth=3) +
