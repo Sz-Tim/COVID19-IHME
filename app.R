@@ -1,6 +1,6 @@
 
 
-library(shiny); library(tidyverse)
+library(shiny); library(tidyverse); library(tidyquant)
 theme_set(theme_bw() + theme(panel.grid=element_blank()))
 source("fn.R")
 obs <- load_obs()
@@ -14,70 +14,44 @@ latest.mod.bd <- format(as.Date(latest.mod.Ymd, format="%Y_%m_%d"), "%b %d")
 ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                  
         navbarMenu("Countries",
-            tabPanel("Deaths",
-                     tags$h3("How well have models predicted", tags$b("mortality"), "for countries?"),
+            tabPanel("Select",
+                     tags$h3("Countries: Confirmed cases and mortality"),
                      sidebarLayout(
                          sidebarPanel(
-                             selectInput(inputId="d.country",
+                             selectInput(inputId="f.country",
                                          label="Choose a country",
                                          choices=sort(unique(obs$gl.df$Country)),
                                          selected="US"),
-                             checkboxGroupInput(inputId="d.modSource.gl",
+                             checkboxGroupInput(inputId="f.modSource.gl",
                                                 label="Select models to show",
                                                 choices=c("IHME", "MIT"),
                                                 selected=c("IHME", "MIT"),
                                                 inline=TRUE),
-                             selectInput(inputId="d.modDates.gl",
+                             selectInput(inputId="f.modDates.gl",
                                          label="Choose IHME model releases to show",
                                          choices=setNames(unique(obs$gl.df$model_date),
                                                           as.Date(unique(obs$gl.df$model_date),
                                                                   format="%Y_%m_%d") %>%
                                                               format("%b %d")),
-                                         selected=c("2020_03_25", "2020_05_04",
-                                                    "2020_04_16", latest.mod.Ymd),
+                                         selected=c("2020_03_25", "2020_04_16", 
+                                                    latest.mod.Ymd),
                                          multiple=TRUE),
-                             dateRangeInput(inputId="d.dates.gl",
+                             dateRangeInput(inputId="f.dates.gl",
                                             label="Choose dates to display",
                                             start="2020-03-01", end="2020-07-01",
                                             min="2020-01-03", max="2020-08-04"),
-                             checkboxInput(inputId="d.pK.gl",
+                             checkboxInput(inputId="f.pK.gl",
                                            label="Display per million people",
                                            value=FALSE),
                              tags$hr(),
-                             "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
+                             "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
                              tags$hr(),
                              "Mar 25: original release", tags$br(),
                              "Apr 16: most optimistic for US", tags$br(),
-                             "May 04: most pessimistic for US", tags$br(),
+                             "May 08: most pessimistic for US", tags$br(),
                              paste0(latest.mod.bd, ":"), "most recent"
                          ),
-                         mainPanel(plotOutput(outputId="country.d", width="100%"))
-                     )
-            ),
-            tabPanel("Cases",
-                     tags$h3("How are", tags$b("confirmed cases"), "changing among countries?"),
-                     sidebarLayout(
-                         sidebarPanel(
-                             selectInput(inputId="c.country",
-                                         label="Choose a country",
-                                         choices=sort(unique(obs$obs.c.gl$Country)),
-                                         selected="US"),
-                             checkboxGroupInput(inputId="c.modSource.gl",
-                                                label="Select models to show",
-                                                choices=c("MIT"),
-                                                selected=c("MIT"),
-                                                inline=TRUE),
-                             dateRangeInput(inputId="c.dates.gl",
-                                            label="Choose dates to display",
-                                            start="2020-03-01", end=Sys.Date()+14,
-                                            min="2020-01-03", max=Sys.Date()+14),
-                             checkboxInput(inputId="c.pK.gl",
-                                           label="Display per million people",
-                                           value=FALSE),
-                             tags$hr(),
-                             "The", tags$b("points"), "show reported cases, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
-                         ),
-                         mainPanel(plotOutput(outputId="country.c", width="100%"))
+                         mainPanel(plotOutput(outputId="country.focus"))
                      )
             ),
             tabPanel("Compare",
@@ -104,72 +78,46 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
             )
         ),
         navbarMenu("US States",
-            tabPanel("Deaths",
-                     tags$h3("How well have models predicted", tags$b("mortality"), "for US states?"), 
-                     sidebarLayout(
-                         sidebarPanel(
-                             selectInput(inputId="d.state",
-                                         label="Choose a state",
-                                         choices=sort(unique(obs$us.df$State)),
-                                         selected="Colorado"),
-                             checkboxGroupInput(inputId="d.modSource.us",
-                                                label="Select models to show",
-                                                choices=c("IHME", "MIT"),
-                                                selected=c("IHME", "MIT"),
-                                                inline=TRUE),
-                             selectInput(inputId="d.modDates.us",
-                                         label="Choose model releases to show",
-                                         choices=setNames(unique(obs$us.df$model_date),
-                                                          as.Date(unique(obs$us.df$model_date),
-                                                                  format="%Y_%m_%d") %>%
-                                                              format("%b %d")),
-                                         selected=c("2020_03_25", "2020_05_04",
-                                                    "2020_04_16", latest.mod.Ymd),
-                                         multiple=TRUE),
-                             dateRangeInput(inputId="d.dates.us",
-                                            label="Choose dates to display",
-                                            start="2020-03-01", end="2020-07-01",
-                                            min="2020-01-03", max="2020-08-04"),
-                             checkboxInput(inputId="d.pK.us",
-                                           label="Display per 10,000 people",
-                                           value=FALSE),
-                             tags$hr(),
-                             "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). The vertical", tags$b("dotted line"), "shows the end of the deadliest 7-day period.",
-                             tags$hr(),
-                             "Mar 25: original release", tags$br(),
-                             "Apr 16: most optimistic for US", tags$br(),
-                             "May 04: most pessimistic for US", tags$br(),
-                             paste0(latest.mod.bd, ":"), "most recent"
-                         ),
-                         mainPanel(plotOutput(outputId="state.d", width="100%"))
-                     )
-            ),
-            tabPanel("Cases",
-                     tags$h3("How are", tags$b("confirmed cases"), "changing among US states?"),
-                     sidebarLayout(
-                         sidebarPanel(
-                             selectInput(inputId="c.state",
-                                         label="Choose a state",
-                                         choices=sort(unique(obs$us.df$State)),
-                                         selected="Colorado"),
-                             checkboxGroupInput(inputId="c.modSource.us",
-                                                label="Select models to show",
-                                                choices=c("MIT"),
-                                                selected=c("MIT"),
-                                                inline=TRUE),
-                             dateRangeInput(inputId="c.dates.us",
-                                            label="Choose dates to display",
-                                            start="2020-03-01", end=Sys.Date()+14,
-                                            min="2020-01-03", max=Sys.Date()+14),
-                             checkboxInput(inputId="c.pK.us",
-                                           label="Display per 10,000 people",
-                                           value=FALSE),
-                             tags$hr(),
-                             "The", tags$b("points"), "show reported deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The vertical", tags$b("dotted line"), "shows the end of the 7-day period with the most new cases."
-                         ),
-                         mainPanel(plotOutput(outputId="state.c", width="100%")),
-                     )
-            ),
+            tabPanel("Select",
+                tags$h3("US States: Confirmed cases and mortality"),
+                sidebarLayout(
+                    sidebarPanel(
+                        selectInput(inputId="f.state",
+                                    label="Choose a state",
+                                    choices=sort(unique(obs$us.df$State)),
+                                    selected="Colorado"),
+                        checkboxGroupInput(inputId="f.modSource.us",
+                                           label="Select models to show",
+                                           choices=c("IHME", "MIT"),
+                                           selected=c("IHME", "MIT"),
+                                           inline=TRUE),
+                        selectInput(inputId="f.modDates.us",
+                                    label="Choose IHME model releases to show",
+                                    choices=setNames(unique(obs$us.df$model_date),
+                                                     as.Date(unique(obs$us.df$model_date),
+                                                             format="%Y_%m_%d") %>%
+                                                         format("%b %d")),
+                                    selected=c("2020_03_25", "2020_04_16", 
+                                               latest.mod.Ymd),
+                                    multiple=TRUE),
+                        dateRangeInput(inputId="f.dates.us",
+                                       label="Choose dates to display",
+                                       start="2020-03-01", end="2020-07-01",
+                                       min="2020-01-03", max="2020-08-04"),
+                        checkboxInput(inputId="f.pK.us",
+                                      label="Display per 10,000 people",
+                                      value=FALSE),
+                        tags$hr(),
+                        "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the smoothed average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
+                        tags$hr(),
+                        "Mar 25: original release", tags$br(),
+                        "Apr 16: most optimistic for US", tags$br(),
+                        "May 08: most pessimistic for US", tags$br(),
+                        paste0(latest.mod.bd, ":"), "most recent"
+                    ),
+                    mainPanel(plotOutput(outputId="state.focus"))
+                )
+            ),       
             tabPanel("Compare",
                      tags$h3("How do states compare?"),
                      sidebarLayout(
@@ -191,7 +139,32 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                          ),
                          mainPanel(plotOutput(outputId="state.comp", width="100%"))
                      )
-            )
+            ),
+            tabPanel("Overview",
+                tags$h3("Overview of US States"),
+                sidebarLayout(
+                    sidebarPanel(radioButtons(inputId="over.type",
+                                              label="Choose metric",
+                                              choices=c("Cases", "Deaths"),
+                                              selected="Cases"),
+                                 radioButtons(inputId="over.span",
+                                              label="Choose span",
+                                              choices=c("Daily", "Total"),
+                                              selected="Daily"),
+                                 dateRangeInput(inputId="over.dates",
+                                                label="Choose dates to display",
+                                                start="2020-03-01", end=Sys.Date(),
+                                                min="2020-01-03", max=Sys.Date()),
+                                 checkboxInput(inputId="over.pK",
+                                               label="Display per 10k people",
+                                               value=TRUE),
+                                 checkboxInput(inputId="over.free",
+                                               label="Free y-axis?",
+                                               value=FALSE),
+                                 width=3),
+                    mainPanel(plotOutput(outputId="state.overview"),
+                              width=9)
+                ))
         ),
         navbarMenu(title="Peaks",
             tabPanel("Deaths",
@@ -241,7 +214,97 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
 # Define server logic required to draw a histogram
 server <- function(input, output) {
     
-    ###---- Reactives: Countries
+    ###---- Reactives: Countries -----------------------------------------------
+    
+    # Focus 
+    obs.f.gl <- reactive({
+        bind_rows(
+            obs$obs.c.gl %>% ungroup %>%
+                filter(Country == input$f.country & !is.na(Cases.obs) &
+                           Date >= input$f.dates.gl[1] & 
+                           Date <= input$f.dates.gl[2]) %>%
+                mutate(Type="Cases",
+                       obs=ifelse(rep(input$f.pK.gl, n()), 
+                                  Cases.obs/pop, Cases.obs)) %>%
+                select(-pop, -Cases.obs),
+            obs$obs.d.gl %>% ungroup %>%
+                filter(Country %in% input$f.country & !is.na(Deaths.obs) &
+                           Date >= input$f.dates.gl[1] & 
+                           Date <= input$f.dates.gl[2]) %>%
+                mutate(Type="Deaths",
+                       obs=ifelse(rep(input$f.pK.gl, n()), 
+                                  Deaths.obs/pop, Deaths.obs)) %>%
+                select(-pop, -Deaths.obs)
+        ) %>% arrange(desc(span), Type) %>%
+            mutate(src="Average",
+                   SpanType=factor(paste(span, Type), 
+                                   levels=c(unique(paste(span, Type)))))
+    })
+    
+    obs.lab.f.gl <- reactive({
+        tibble(SpanType=factor(levels(obs.f.gl()$SpanType)[1], 
+                               levels=levels(obs.f.gl()$SpanType)),
+               Date=input$f.dates.gl[1], 
+               obs=max(obs.f.gl()$obs),
+               lab=ifelse(input$f.pK.gl, "per million", ""))
+    })
+    
+    obs.max.f.gl <- reactive({
+        bind_rows(
+            obs$obs.c.gl.max %>% filter(Country==input$f.country &
+                                            Date >= input$f.dates.gl[1] & 
+                                            Date <= input$f.dates.gl[2]) %>%
+                mutate(Type="Cases", 
+                       obs=ifelse(input$f.pK.gl, obs/pop, obs)),
+            obs$obs.d.gl.max %>% filter(Country==input$f.country &
+                                            Date >= input$f.dates.gl[1] & 
+                                            Date <= input$f.dates.gl[2]) %>%
+                mutate(Type="Deaths", 
+                       obs=ifelse(input$f.pK.gl, obs/pop, obs))
+        ) %>% mutate(span="Daily",
+                     SpanType=factor(paste(span, Type), 
+                                     levels=c(unique(paste(span, Type)))))
+    })
+    
+    mit.f.gl <- reactive({
+        bind_rows(
+            obs$mit.gl %>% filter(Country==input$f.country &
+                                      Date >= input$f.dates.gl[1] & 
+                                      Date <= input$f.dates.gl[2]) %>%
+                mutate(Type="Cases", 
+                       pred=ifelse(rep(input$f.pK.gl, n()), Cases/pop, Cases)),
+            obs$mit.gl %>% filter(Country==input$f.country &
+                                      Date >= input$f.dates.gl[1] & 
+                                      Date <= input$f.dates.gl[2]) %>%
+                mutate(Type="Deaths",
+                       pred=ifelse(rep(input$f.pK.gl, n()), Deaths/pop, Deaths))
+        ) %>% mutate(modType="MIT",
+                     SpanType=factor(paste(span, Type), 
+                                     levels=c(unique(paste(span, Type)))))
+    })
+    
+    ihme.f.gl <- reactive({
+        obs$gl.df %>% filter(Country==input$f.country &
+                                 model_date %in% input$f.modDates.gl &
+                                 Date >= input$f.dates.gl[1] & 
+                                 Date <= input$f.dates.gl[2]) %>%
+            group_by(model_date) %>%
+            filter(Date >= as.Date(model_date, format="%Y_%m_%d")) %>%
+            mutate(Type="Deaths",
+                   pred=ifelse(rep(input$f.pK.gl, n()), Deaths/pop, Deaths),
+                   modType="IHME",
+                   SpanType=factor(paste(span, Type), 
+                                   levels=c(unique(paste(span, Type)))))
+    })
+    
+    ihme.starts.f.gl <- reactive({
+        ihme.f.gl() %>% filter(Date==as.Date(model_date, format="%Y_%m_%d") &
+                                   Date >= input$f.dates.gl[1] & 
+                                   Date <= input$f.dates.gl[2])
+    })
+    
+    
+    # Comparison
     obs.comp.gl <- reactive({
         bind_rows(
             obs$obs.c.gl %>% ungroup %>%
@@ -264,6 +327,7 @@ server <- function(input, output) {
             mutate(SpanType=factor(paste(span, Type), 
                                    levels=c(unique(paste(span, Type)))))
     })
+    
     obs.lab.comp.gl <- reactive({
         tibble(SpanType=factor(levels(obs.comp.gl()$SpanType)[1], 
                                levels=levels(obs.comp.gl()$SpanType)),
@@ -271,89 +335,133 @@ server <- function(input, output) {
                obs=max(obs.comp.gl()$obs),
                lab=ifelse(input$comp.pK.gl, "per million", ""))
     })
-    c.mit.gl.i <- reactive({
-        obs$mit.gl %>%
-            filter(Country==input$c.country &
-                       Date >= input$c.dates.gl[1] & Date <= input$c.dates.gl[2]) %>%
-            mutate(Cases=ifelse(rep(input$c.pK.gl, n()), Cases/pop, Cases),
-                   modType="MIT")
-    })
-    obs.c.gl.i <- reactive({
-        obs$obs.c.gl %>% ungroup %>%
-            filter(Country==input$c.country & !is.na(Cases.obs) &
-                       Date >= input$c.dates.gl[1] & Date <= input$c.dates.gl[2]) %>%
+    
+    # obs.lab.c.gl <- reactive({
+    #     tibble(span=c("Total", "Daily"), lab.size=c(6,5),
+    #            Date=c(input$c.dates.gl[1], obs.max.c.gl.i()$Date),
+    #            Cases=c(max(c(filter(obs.c.gl.i(), span=="Total")$Cases.obs), 
+    #                        na.rm=T),
+    #                    max(c(filter(obs.c.gl.i(), span=="Daily")$Cases.obs), 
+    #                        na.rm=T)*1.07),
+    #            lab=c(paste0(input$c.country, "\n", 
+    #                         c("", "(per million)")[input$c.pK.gl+1]),
+    #                  paste("7-day peak:\n", format(obs.max.c.gl.i()$Date, "%b %d"))))
+    # })
+    # obs.lab.d.gl <- reactive({
+    #     tibble(span=c("Total", "Daily"), lab.size=c(6,5),
+    #            Date=c(input$d.dates.gl[1], obs.max.d.gl.i()$Date),
+    #            Deaths=c(max(c(filter(d.gl.i(), span=="Total")$Deaths),
+    #                         c(filter(obs.d.gl.i(), span=="Total")$Deaths.obs), 
+    #                         na.rm=T),
+    #                     max(c(filter(d.gl.i(), span=="Daily")$Deaths),
+    #                         c(filter(obs.d.gl.i(), span=="Daily")$Deaths.obs), 
+    #                         na.rm=T)*1.07),
+    #            lab=c(paste0(input$d.country, "\n", 
+    #                         c("", "(per million)")[input$d.pK.gl+1]),
+    #                  paste("7-day peak:", format(obs.max.d.gl.i()$Date, "%b %d"))))
+    # })
+    
+    
+    ###---- Reactives: US States -----------------------------------------------
+    obs.us.all <- reactive({
+        bind_rows(
+            obs$obs.c.us %>% ungroup %>%
+                mutate(Type="Cases",
+                       obs=Cases.obs) %>%
+                select(-Cases.obs),
+            obs$obs.d.us %>% ungroup %>%
+                mutate(Type="Deaths",
+                       obs=Deaths.obs) %>%
+                select(-Deaths.obs)
+        ) %>% arrange(desc(span), Type) %>%
             mutate(src="Average",
-                   Cases.obs=ifelse(rep(input$c.pK.gl, n()), 
-                                    Cases.obs/pop, Cases.obs))
+                   SpanType=factor(paste(span, Type), 
+                                   levels=c(unique(paste(span, Type))))) %>%
+            filter(!State %in% c("Grand Princess", "Diamond Princess"))
     })
-    obs.max.c.gl.i <- reactive({
-        obs$obs.c.gl.max %>% filter(Country==input$c.country) %>%
-            filter(Date >= input$c.dates.gl[1] & Date <= input$c.dates.gl[2]) %>%
-            mutate(obs=ifelse(input$c.pK.gl, obs/pop, obs))
+    
+    obs.max.us <- reactive({
+        bind_rows(
+            obs$obs.c.us.max %>% mutate(Type="Cases"),
+            obs$obs.d.us.max %>% mutate(Type="Deaths")
+        ) %>% mutate(span="Daily",
+                     SpanType=factor(paste(span, Type), 
+                                     levels=c(unique(paste(span, Type)))))
     })
-    obs.lab.c.gl <- reactive({
-        tibble(span=c("Total", "Daily"), lab.size=c(6,5),
-               Date=c(input$c.dates.gl[1], obs.max.c.gl.i()$Date),
-               Cases=c(max(c(filter(obs.c.gl.i(), span=="Total")$Cases.obs), 
-                           na.rm=T),
-                       max(c(filter(obs.c.gl.i(), span=="Daily")$Cases.obs), 
-                           na.rm=T)*1.07),
-               lab=c(paste0(input$c.country, "\n", 
-                            c("", "(per million)")[input$c.pK.gl+1]),
-                     paste("7-day peak:\n", format(obs.max.c.gl.i()$Date, "%b %d"))))
+    
+    # Focus 
+    obs.f.us <- reactive({
+        obs.us.all() %>% 
+            filter(State == input$f.state & !is.na(obs) &
+                       Date >= input$f.dates.us[1] & 
+                       Date <= input$f.dates.us[2]) %>%
+            mutate(obs=ifelse(rep(input$f.pK.us, n()), obs/pop, obs))
     })
-    obs.d.gl.i <- reactive({
-        obs$obs.d.gl %>% ungroup %>%
-            filter(Country==input$d.country & !is.na(Deaths.obs) &
-                       Date >= input$d.dates.gl[1] & Date <= input$d.dates.gl[2]) %>%
-            mutate(src="Average",
-                   Deaths.obs=ifelse(rep(input$d.pK.gl, n()), 
-                                     Deaths.obs/pop, Deaths.obs))
+    
+    obs.lab.f.us <- reactive({
+        tibble(SpanType=factor(levels(obs.f.us()$SpanType)[1], 
+                               levels=levels(obs.f.us()$SpanType)),
+               Date=input$f.dates.us[1], 
+               obs=max(obs.f.us()$obs),
+               lab=ifelse(input$f.pK.us, "per 10k", ""))
     })
-    obs.max.d.gl.i <- reactive({
-        obs$obs.d.gl.max %>% filter(Country==input$d.country) %>%
-            filter(Date >= input$d.dates.gl[1] & Date <= input$d.dates.gl[2]) %>%
-            mutate(obs=ifelse(input$d.pK.gl, obs/pop, obs))
+    
+    obs.max.f.us <- reactive({
+        bind_rows(
+            obs$obs.c.us.max %>% filter(State==input$f.state &
+                                            Date >= input$f.dates.us[1] & 
+                                            Date <= input$f.dates.us[2]) %>%
+                mutate(Type="Cases", 
+                       obs=ifelse(input$f.pK.us, obs/pop, obs)),
+            obs$obs.d.us.max %>% filter(State==input$f.state &
+                                            Date >= input$f.dates.us[1] & 
+                                            Date <= input$f.dates.us[2]) %>%
+                mutate(Type="Deaths", 
+                       obs=ifelse(input$f.pK.us, obs/pop, obs))
+        ) %>% mutate(span="Daily",
+                     SpanType=factor(paste(span, Type), 
+                                     levels=c(unique(paste(span, Type)))))
     })
-    d.gl.i <- reactive({
-        obs$gl.df %>% 
-            filter(Country==input$d.country & 
-                       model_date %in% input$d.modDates.gl &
-                       Date >= input$d.dates.gl[1] & Date <= input$d.dates.gl[2]) %>%
-            group_by(model_date) %>% 
+    
+    mit.f.us <- reactive({
+        bind_rows(
+            obs$mit.us %>% filter(State==input$f.state &
+                                      Date >= input$f.dates.us[1] & 
+                                      Date <= input$f.dates.us[2]) %>%
+                mutate(Type="Cases", 
+                       pred=ifelse(rep(input$f.pK.us, n()), Cases/pop, Cases)),
+            obs$mit.us %>% filter(State==input$f.state &
+                                      Date >= input$f.dates.us[1] & 
+                                      Date <= input$f.dates.us[2]) %>%
+                mutate(Type="Deaths",
+                       pred=ifelse(rep(input$f.pK.us, n()), Deaths/pop, Deaths))
+        ) %>% mutate(modType="MIT",
+                     SpanType=factor(paste(span, Type), 
+                                     levels=c(unique(paste(span, Type)))))
+    })
+    
+    ihme.f.us <- reactive({
+        obs$us.df %>% filter(State==input$f.state &
+                                 model_date %in% input$f.modDates.us &
+                                 Date >= input$f.dates.us[1] & 
+                                 Date <= input$f.dates.us[2]) %>%
+            group_by(model_date) %>%
             filter(Date >= as.Date(model_date, format="%Y_%m_%d")) %>%
-            mutate(Deaths.obs=ifelse(rep(input$d.pK.gl, n()), 
-                                     Deaths.obs/pop, Deaths.obs),
-                   Deaths=ifelse(rep(input$d.pK.gl, n()), Deaths/pop, Deaths))
+            mutate(Type="Deaths",
+                   pred=ifelse(rep(input$f.pK.us, n()), Deaths/pop, Deaths),
+                   modType="IHME",
+                   SpanType=factor(paste(span, Type), 
+                                   levels=c(unique(paste(span, Type)))))
     })
-    d.mit.gl.i <- reactive({
-        obs$mit.gl %>%
-            filter(Country==input$d.country &
-                       Date >= input$d.dates.gl[1] & Date <= input$d.dates.gl[2]) %>%
-            mutate(Deaths=ifelse(rep(input$d.pK.gl, n()), Deaths/pop, Deaths),
-                   modType="MIT")
-    })
-    d.gl.i.starts <- reactive({
-        d.gl.i() %>% 
-            filter(Date==as.Date(model_date, format="%Y_%m_%d") &
-                       Date >= input$d.dates.gl[1] & Date <= input$d.dates.gl[2])
-    })
-    obs.lab.d.gl <- reactive({
-        tibble(span=c("Total", "Daily"), lab.size=c(6,5),
-               Date=c(input$d.dates.gl[1], obs.max.d.gl.i()$Date),
-               Deaths=c(max(c(filter(d.gl.i(), span=="Total")$Deaths),
-                            c(filter(obs.d.gl.i(), span=="Total")$Deaths.obs), 
-                            na.rm=T),
-                        max(c(filter(d.gl.i(), span=="Daily")$Deaths),
-                            c(filter(obs.d.gl.i(), span=="Daily")$Deaths.obs), 
-                            na.rm=T)*1.07),
-               lab=c(paste0(input$d.country, "\n", 
-                            c("", "(per million)")[input$d.pK.gl+1]),
-                     paste("7-day peak:", format(obs.max.d.gl.i()$Date, "%b %d"))))
+    
+    ihme.starts.f.us <- reactive({
+        ihme.f.us() %>% filter(Date==as.Date(model_date, format="%Y_%m_%d") &
+                                   Date >= input$f.dates.us[1] & 
+                                   Date <= input$f.dates.us[2])
     })
     
     
-    ###---- Reactives: States
+    # Comparison
     obs.comp.us <- reactive({
         bind_rows(
             obs$obs.c.us %>% ungroup %>%
@@ -383,180 +491,182 @@ server <- function(input, output) {
                obs=max(obs.comp.us()$obs),
                lab=ifelse(input$comp.pK.us, "per 10k", ""))
     })
-    c.mit.us.i <- reactive({
-        obs$mit.us %>%
-            filter(State==input$c.state &
-                       Date >= input$c.dates.us[1] & Date <= input$c.dates.us[2]) %>%
-            mutate(Cases=ifelse(rep(input$c.pK.us, n()), Cases/pop, Cases),
-                   modType="MIT")
-    })
-    obs.c.us.i <- reactive({
-        obs$obs.c.us %>% ungroup %>%
-            filter(State==input$c.state & !is.na(Cases.obs) &
-                       Date >= input$c.dates.us[1] & Date <= input$c.dates.us[2]) %>%
-            mutate(src="Average",
-                   Cases.obs=ifelse(rep(input$c.pK.us, n()), 
-                                    Cases.obs/pop, Cases.obs))
-    })
-    obs.max.c.us.i <- reactive({
-        obs$obs.c.us.max %>% filter(State==input$c.state) %>%
-            filter(Date >= input$c.dates.us[1] & Date <= input$c.dates.us[2]) %>%
-            mutate(obs=ifelse(input$c.pK.us, obs/pop, obs))
-    })
-    obs.lab.c.us <- reactive({
-        tibble(span=c("Total", "Daily"), lab.size=c(6,5),
-               Date=c(input$c.dates.us[1], obs.max.c.us.i()$Date),
-               Cases=c(max(c(filter(obs.c.us.i(), span=="Total")$Cases.obs), 
-                           na.rm=T),
-                       max(c(filter(obs.c.us.i(), span=="Daily")$Cases.obs), 
-                           na.rm=T)*1.07),
-               lab=c(paste0(input$c.state, "\n", 
-                            c("", "(per 10k)")[input$c.pK.us+1]),
-                     paste("7-day peak:\n", format(obs.max.c.us.i()$Date, "%b %d"))))
-    })
-    obs.d.us.i <- reactive({
-        obs$obs.d.us %>% ungroup %>%
-            filter(State==input$d.state & !is.na(Deaths.obs) &
-                       Date >= input$d.dates.us[1] & Date <= input$d.dates.us[2]) %>%
-            mutate(src="Average",
-                   Deaths.obs=ifelse(rep(input$d.pK.us, n()), 
-                                     Deaths.obs/pop, Deaths.obs))
-    })
-    obs.max.d.us.i <- reactive({
-        obs$obs.d.us.max %>% filter(State==input$d.state) %>%
-            filter(Date >= input$d.dates.us[1] & Date <= input$d.dates.us[2]) %>%
-            mutate(obs=ifelse(input$d.pK.us, obs/pop, obs))
-    })
-    d.us.i <- reactive({
-        obs$us.df %>%
-            filter(State==input$d.state &
-                       model_date %in% input$d.modDates.us &
-                       Date >= input$d.dates.us[1] & Date <= input$d.dates.us[2]) %>%
-            group_by(model_date) %>%
-            filter(Date >= as.Date(model_date, format="%Y_%m_%d")) %>%
-            mutate(Deaths.obs=ifelse(rep(input$d.pK.us, n()), 
-                                     Deaths.obs/pop, Deaths.obs),
-                   Deaths=ifelse(rep(input$d.pK.us, n()), Deaths/pop, Deaths))
-    })
-    d.mit.us.i <- reactive({
-        obs$mit.us %>%
-            filter(State==input$d.state &
-                       Date >= input$d.dates.us[1] & Date <= input$d.dates.us[2]) %>%
-            mutate(Deaths=ifelse(rep(input$d.pK.us, n()), Deaths/pop, Deaths),
-                   modType="MIT")
-    })
-    d.us.i.starts <- reactive({
-        d.us.i() %>%
-            filter(Date==as.Date(model_date, format="%Y_%m_%d") &
-                       Date >= input$d.dates.us[1] & Date <= input$d.dates.us[2]) 
-    })
-    obs.lab.d.us <- reactive({
-        tibble(span=c("Total", "Daily"), lab.size=c(6, 5),
-               Date=c(input$d.dates.us[1], obs.max.d.us.i()$Date),
-               Deaths=c(max(c(filter(d.us.i(), span=="Total")$Deaths),
-                            c(filter(obs.d.us.i(), span=="Total")$Deaths.obs),
-                            na.rm=T),
-                        max(c(filter(d.us.i(), span=="Daily")$Deaths),
-                            c(filter(obs.d.us.i(), span=="Daily")$Deaths.obs),
-                            na.rm=T)*1.07),
-               lab=c(paste0(input$d.state, "\n", 
-                            c("", "(per 10k)")[input$d.pK.us+1]),
-                     paste("7-day peak:", format(obs.max.d.us.i()$Date, "%b %d"))))
-    })
+    
+    # obs.lab.c.us <- reactive({
+    #     tibble(span=c("Total", "Daily"), lab.size=c(6,5),
+    #            Date=c(input$c.dates.us[1], obs.max.c.us.i()$Date),
+    #            Cases=c(max(c(filter(obs.c.us.i(), span=="Total")$Cases.obs), 
+    #                        na.rm=T),
+    #                    max(c(filter(obs.c.us.i(), span=="Daily")$Cases.obs), 
+    #                        na.rm=T)*1.07),
+    #            lab=c(paste0(input$c.state, "\n", 
+    #                         c("", "(per 10k)")[input$c.pK.us+1]),
+    #                  paste("7-day peak:\n", format(obs.max.c.us.i()$Date, "%b %d"))))
+    # })
+    # obs.lab.d.us <- reactive({
+    #     tibble(span=c("Total", "Daily"), lab.size=c(6, 5),
+    #            Date=c(input$d.dates.us[1], obs.max.d.us.i()$Date),
+    #            Deaths=c(max(c(filter(d.us.i(), span=="Total")$Deaths),
+    #                         c(filter(obs.d.us.i(), span=="Total")$Deaths.obs),
+    #                         na.rm=T),
+    #                     max(c(filter(d.us.i(), span=="Daily")$Deaths),
+    #                         c(filter(obs.d.us.i(), span=="Daily")$Deaths.obs),
+    #                         na.rm=T)*1.07),
+    #            lab=c(paste0(input$d.state, "\n", 
+    #                         c("", "(per 10k)")[input$d.pK.us+1]),
+    #                  paste("7-day peak:", format(obs.max.d.us.i()$Date, "%b %d"))))
+    # })
     
     
-    ###---- Plot: Country cases
-    output$country.c <- renderPlot({
-        ggplot(obs.c.gl.i(), aes(Date)) +
+    
+    ###---- Plots: Countries ---------------------------------------------------
+    output$country.focus <- renderPlot({
+        ggplot(obs.f.gl(), aes(Date, obs)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            {if("MIT" %in% input$c.modSource.gl) {
-                geom_line(data=c.mit.gl.i(), aes(y=Cases, linetype=modType),
+            {if("MIT" %in% input$f.modSource.gl) {
+                geom_line(data=mit.f.gl(), aes(y=pred, linetype=modType),
                           size=1, colour="red")
             }} +
-            geom_line(data=obs.c.gl.i(), aes(y=Cases.obs, alpha=src), method="loess", 
-                      stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
-            geom_vline(data=obs.max.c.gl.i(), aes(xintercept=Date), linetype=3) +
-            geom_text(data=obs.lab.c.gl(), aes(y=Cases, label=lab), 
-                      fontface=c("italic", "plain"), nudge_x=c(0,2),
-                      size=obs.lab.c.gl()$lab.size, hjust=0, vjust=1, colour=1) +
-            geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
-                       size=2, shape=21) + 
-            geom_rug(data=filter(obs.c.gl.i(), Date==last(Date) & span=="Total"), 
-                     aes(y=Cases.obs), colour="black", sides="r") +
-            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
-                                  guide=guide_legend(order=1)) +
-            scale_fill_brewer("Observed", type="div", palette=1,
-                              guide=guide_legend(order=2)) +
-            scale_alpha_manual("", values=0.4,
-                               guide=guide_legend(order=3,
-                                                  title.position="bottom")) +
-            xlim(as.Date(input$c.dates.gl[1]),
-                 as.Date(input$c.dates.gl[2])) +
-            scale_y_continuous(labels=pretty_numbers, position="right") + 
-            labs(x="", y="") +
-            facet_grid(factor(span, levels=c("Total", "Daily"))~., 
-                       scales="free_y", switch="y") +
-            theme(axis.text=element_text(size=14),
-                  legend.text=element_text(size=14),
-                  axis.title=element_text(size=16),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18), 
-                  strip.text=element_text(size=16))
-    }, width=600, height=675)
-    
-    ###---- Plot: Countries vs. means
-    output$country.d <- renderPlot({
-        ggplot(d.gl.i(), aes(Date, Deaths, colour=model_date)) +
-            geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            {if("MIT" %in% input$d.modSource.gl) {
-                geom_line(data=d.mit.gl.i(), aes(y=Deaths, linetype=modType),
-                          size=1, colour="red")
-            }} +
-            {if("IHME" %in% input$d.modSource.gl) {
-                geom_text(data=d.gl.i.starts(), aes(group=model_date),
+            {if("IHME" %in% input$f.modSource.gl) {
+                geom_text(data=ihme.starts.f.gl(), 
+                          aes(y=pred, group=model_date, colour=model_date),
                           label="|", size=5, fontface="bold", family="mono")
             }} +
-            {if("IHME" %in% input$d.modSource.gl) {
-                geom_line(data=d.gl.i(), aes(group=model_date), size=1)
+            {if("IHME" %in% input$f.modSource.gl) {
+                geom_line(data=ihme.f.gl(), size=1,
+                          aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_line(data=obs.d.gl.i(), aes(y=Deaths.obs, alpha=src), 
-                      method="loess", stat="smooth",
-                      colour=1, size=1.5, span=0.6, formula=y~x) + 
-            geom_vline(data=obs.max.d.gl.i(), aes(xintercept=Date), linetype=3) +
-            geom_text(data=obs.lab.d.gl(), aes(label=lab), 
-                      fontface=c("italic", "plain"), nudge_x=c(0,2),
-                      size=obs.lab.d.gl()$lab.size, hjust=0, vjust=1, colour=1) +
-            geom_rug(data=filter(obs.d.gl.i(), Date==last(Date) & span=="Total"), 
-                     aes(y=Deaths.obs), colour="black", sides="r") +
-            geom_point(data=obs.d.gl.i(), aes(y=Deaths.obs, fill=wDay), 
+            geom_ma(data=filter(obs.f.gl(), span=="Daily"),
+                    aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
+            geom_vline(data=obs.max.f.gl(), aes(xintercept=Date), linetype=3) +
+            geom_text(data=obs.lab.f.gl(), aes(label=lab), 
+                      # fontface=c("italic", "plain"), nudge_x=c(0,2),
+                      size=4, hjust=0, vjust=1, colour=1) +
+            geom_rug(data=filter(obs.f.gl(), Date==last(Date) & span=="Total"), 
+                     colour="black", sides="r") +
+            geom_point(data=obs.f.gl(), aes(fill=wDay), 
                        colour="black", size=2, shape=21) + 
-            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
-                                  guide=guide_legend(order=1)) +
+            scale_linetype_manual("MIT Model", labels="MIT", values=2,
+                                  guide=guide_legend(order=1,
+                                                     title.position="top")) +
             scale_colour_viridis_d("IHME Model",
-                                   labels=as.Date(unique(d.gl.i()$model_date), 
+                                   labels=as.Date(unique(ihme.f.gl()$model_date),
                                                   format="%Y_%m_%d") %>%
                                        format("%b %d"),
-                                   guide=guide_legend(order=2)) +
-            scale_fill_brewer("\n\n\nObserved", type="div", 
-                              guide=guide_legend(order=3)) +
+                                   guide=guide_legend(order=2,
+                                                      title.position="top")) +
+            scale_fill_brewer("Observed", type="div",
+                              guide=guide_legend(order=3,
+                                                 title.position="top",
+                                                 keyheight=grid::unit(2, "mm"))) +
             scale_alpha_manual("", values=0.4,
                                guide=guide_legend(order=4,
-                                                  title.position="bottom")) +
-            xlim(as.Date(input$d.dates.gl[1]),
-                 as.Date(input$d.dates.gl[2])) +
+                                                  title.position="top")) +
+            xlim(as.Date(input$f.dates.gl[1]),
+                 as.Date(input$f.dates.gl[2])) +
             scale_y_continuous(labels=pretty_numbers, position="right") + 
             labs(x="", y="") +
-            facet_grid(factor(span, levels=c("Total", "Daily"))~., 
-                       scales="free_y", switch="y") +
+            facet_wrap(~SpanType, scales="free_y") +
             theme(axis.text=element_text(size=14),
-                  legend.text=element_text(size=14),
+                  legend.text=element_text(size=12),
                   axis.title=element_text(size=16),
-                  legend.title=element_text(size=16), 
+                  legend.title=element_text(size=14), 
                   title=element_text(size=18), 
-                  strip.text=element_text(size=16))
-    }, width=600, height=675)
+                  strip.text=element_text(size=16),
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="vertical")
+    }, width=700, height=725)
     
-    ###---- Plot: Country comparisons
+    # output$country.c <- renderPlot({
+    #     ggplot(obs.c.gl.i(), aes(Date)) +
+    #         geom_hline(yintercept=0, colour="gray30", size=0.25) +
+    #         {if("MIT" %in% input$c.modSource.gl) {
+    #             geom_line(data=c.mit.gl.i(), aes(y=Cases, linetype=modType),
+    #                       size=1, colour="red")
+    #         }} +
+    #         geom_line(data=obs.c.gl.i(), aes(y=Cases.obs, alpha=src), method="loess", 
+    #                   stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
+    #         geom_vline(data=obs.max.c.gl.i(), aes(xintercept=Date), linetype=3) +
+    #         geom_text(data=obs.lab.c.gl(), aes(y=Cases, label=lab), 
+    #                   fontface=c("italic", "plain"), nudge_x=c(0,2),
+    #                   size=obs.lab.c.gl()$lab.size, hjust=0, vjust=1, colour=1) +
+    #         geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
+    #                    size=2, shape=21) + 
+    #         geom_rug(data=filter(obs.c.gl.i(), Date==last(Date) & span=="Total"), 
+    #                  aes(y=Cases.obs), colour="black", sides="r") +
+    #         scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+    #                               guide=guide_legend(order=1)) +
+    #         scale_fill_brewer("Observed", type="div", palette=1,
+    #                           guide=guide_legend(order=2)) +
+    #         scale_alpha_manual("", values=0.4,
+    #                            guide=guide_legend(order=3,
+    #                                               title.position="bottom")) +
+    #         xlim(as.Date(input$c.dates.gl[1]),
+    #              as.Date(input$c.dates.gl[2])) +
+    #         scale_y_continuous(labels=pretty_numbers, position="right") + 
+    #         labs(x="", y="") +
+    #         facet_grid(factor(span, levels=c("Total", "Daily"))~., 
+    #                    scales="free_y", switch="y") +
+    #         theme(axis.text=element_text(size=14),
+    #               legend.text=element_text(size=14),
+    #               axis.title=element_text(size=16),
+    #               legend.title=element_text(size=16), 
+    #               title=element_text(size=18), 
+    #               strip.text=element_text(size=16))
+    # }, width=600, height=675)
+    # 
+    # output$country.d <- renderPlot({
+    #     ggplot(d.gl.i(), aes(Date, Deaths, colour=model_date)) +
+    #         geom_hline(yintercept=0, colour="gray30", size=0.25) +
+    #         {if("MIT" %in% input$d.modSource.gl) {
+    #             geom_line(data=d.mit.gl.i(), aes(y=Deaths, linetype=modType),
+    #                       size=1, colour="red")
+    #         }} +
+    #         {if("IHME" %in% input$d.modSource.gl) {
+    #             geom_text(data=d.gl.i.starts(), aes(group=model_date),
+    #                       label="|", size=5, fontface="bold", family="mono")
+    #         }} +
+    #         {if("IHME" %in% input$d.modSource.gl) {
+    #             geom_line(data=d.gl.i(), aes(group=model_date), size=1)
+    #         }} +
+    #         geom_line(data=obs.d.gl.i(), aes(y=Deaths.obs, alpha=src), 
+    #                   method="loess", stat="smooth",
+    #                   colour=1, size=1.5, span=0.6, formula=y~x) + 
+    #         geom_vline(data=obs.max.d.gl.i(), aes(xintercept=Date), linetype=3) +
+    #         geom_text(data=obs.lab.d.gl(), aes(label=lab), 
+    #                   fontface=c("italic", "plain"), nudge_x=c(0,2),
+    #                   size=obs.lab.d.gl()$lab.size, hjust=0, vjust=1, colour=1) +
+    #         geom_rug(data=filter(obs.d.gl.i(), Date==last(Date) & span=="Total"), 
+    #                  aes(y=Deaths.obs), colour="black", sides="r") +
+    #         geom_point(data=obs.d.gl.i(), aes(y=Deaths.obs, fill=wDay), 
+    #                    colour="black", size=2, shape=21) + 
+    #         scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+    #                               guide=guide_legend(order=1)) +
+    #         scale_colour_viridis_d("IHME Model",
+    #                                labels=as.Date(unique(d.gl.i()$model_date), 
+    #                                               format="%Y_%m_%d") %>%
+    #                                    format("%b %d"),
+    #                                guide=guide_legend(order=2)) +
+    #         scale_fill_brewer("\n\n\nObserved", type="div", 
+    #                           guide=guide_legend(order=3)) +
+    #         scale_alpha_manual("", values=0.4,
+    #                            guide=guide_legend(order=4,
+    #                                               title.position="bottom")) +
+    #         xlim(as.Date(input$d.dates.gl[1]),
+    #              as.Date(input$d.dates.gl[2])) +
+    #         scale_y_continuous(labels=pretty_numbers, position="right") + 
+    #         labs(x="", y="") +
+    #         facet_grid(factor(span, levels=c("Total", "Daily"))~., 
+    #                    scales="free_y", switch="y") +
+    #         theme(axis.text=element_text(size=14),
+    #               legend.text=element_text(size=14),
+    #               axis.title=element_text(size=16),
+    #               legend.title=element_text(size=16), 
+    #               title=element_text(size=18), 
+    #               strip.text=element_text(size=16))
+    # }, width=600, height=675)
+    
     output$country.comp <- renderPlot({
         ggplot(obs.comp.gl(), 
                aes(Date, y=obs, colour=Country)) +
@@ -583,101 +693,159 @@ server <- function(input, output) {
                   legend.box.margin=margin(-10,0,0,0),
                   legend.position="bottom",
                   legend.direction="horizontal")
-    }, width=600, height=625)
+    }, width=700, height=725)
     
-    ###---- Plot: State cases
-    output$state.c <- renderPlot({
-        ggplot(obs.c.us.i(), aes(Date)) +
+    
+    ###---- Plots: US States ---------------------------------------------------
+    output$state.focus <- renderPlot({
+        ggplot(obs.f.us(), aes(Date, obs)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            {if("MIT" %in% input$c.modSource.us) {
-                geom_line(data=c.mit.us.i(), aes(y=Cases, linetype=modType),
+            {if("MIT" %in% input$f.modSource.us) {
+                geom_line(data=mit.f.us(), aes(y=pred, linetype=modType),
                           size=1, colour="red")
             }} +
-            geom_line(data=obs.c.us.i(), aes(y=Cases.obs, alpha=src), method="loess", 
-                      stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
-            geom_vline(data=obs.max.c.us.i(), aes(xintercept=Date), linetype=3) +
-            geom_text(data=obs.lab.c.us(), aes(y=Cases, label=lab), 
-                      fontface=c("italic", "plain"), nudge_x=c(0,2),
-                      size=obs.lab.c.us()$lab.size, hjust=0, vjust=1, colour=1) +
-            geom_rug(data=filter(obs.c.us.i(), Date==last(Date) & span=="Total"), 
-                     aes(y=Cases.obs), colour="black", sides="r") +
-            geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
-                       size=2, shape=21) + 
-            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
-                                  guide=guide_legend(order=1)) +
-            scale_fill_brewer("Observed", type="div", 
-                              guide=guide_legend(order=2)) +
-            scale_alpha_manual("", values=0.4,
-                               guide=guide_legend(order=3,
-                                                  title.position="bottom")) +
-            xlim(as.Date(input$c.dates.us[1]),
-                 as.Date(input$c.dates.us[2])) +
-            scale_y_continuous(labels=pretty_numbers, position="right") + 
-            labs(x="", y="") +
-            facet_grid(factor(span, levels=c("Total", "Daily"))~., 
-                       scales="free_y", switch="y") +
-            theme(axis.text=element_text(size=14),
-                  legend.text=element_text(size=14),
-                  axis.title=element_text(size=16),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18), 
-                  strip.text=element_text(size=16))
-        
-    }, width=600, height=675)
-    
-    ###---- Plot: States vs. means
-    output$state.d <- renderPlot({
-        ggplot(d.us.i(), aes(Date, Deaths, colour=model_date)) +
-            geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            {if("MIT" %in% input$d.modSource.us) {
-                geom_line(data=d.mit.us.i(), aes(y=Deaths, linetype=modType),
-                          size=1, colour="red")
-            }} +
-            {if("IHME" %in% input$d.modSource.us) {
-                geom_text(data=d.us.i.starts(), aes(group=model_date),
+            {if("IHME" %in% input$f.modSource.us) {
+                geom_text(data=ihme.starts.f.us(), 
+                          aes(y=pred, group=model_date, colour=model_date),
                           label="|", size=5, fontface="bold", family="mono")
             }} +
-            {if("IHME" %in% input$d.modSource.us) {
-                geom_line(data=d.us.i(), aes(group=model_date), size=1)
+            {if("IHME" %in% input$f.modSource.us) {
+                geom_line(data=ihme.f.us(), size=1,
+                          aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_line(data=obs.d.us.i(), aes(y=Deaths.obs, alpha=src),
-                      method="loess", stat="smooth",
-                      colour=1, size=1.5, span=0.6, formula=y~x) +
-            geom_vline(data=obs.max.d.us.i(), aes(xintercept=Date), linetype=3) +
-            geom_text(data=obs.lab.d.us(), aes(label=lab), nudge_x=c(0,2),
-                      fontface=c("italic", "plain"),
-                      size=obs.lab.d.us()$lab.size, hjust=0, vjust=1, colour=1) +
-            geom_rug(data=filter(obs.d.us.i(), Date==last(Date) & span=="Total"), 
-                     aes(y=Deaths.obs), colour="black", sides="r") +
-            geom_point(data=obs.d.us.i(), aes(y=Deaths.obs, fill=wDay),
-                       colour="black", size=2, shape=21) +
-            scale_linetype_manual("MIT Model", labels="MIT", values=2, 
-                                  guide=guide_legend(order=1)) +
+            geom_ma(data=filter(obs.f.us(), span=="Daily"),
+                    aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
+            geom_vline(data=obs.max.f.us(), aes(xintercept=Date), linetype=3) +
+            geom_text(data=obs.lab.f.us(), aes(label=lab), 
+                      # fontface=c("italic", "plain"), nudge_x=c(0,2),
+                      size=4, hjust=0, vjust=1, colour=1) +
+            geom_rug(data=filter(obs.f.us(), Date==last(Date) & span=="Total"), 
+                     colour="black", sides="r") +
+            geom_point(data=obs.f.us(), aes(fill=wDay), 
+                       colour="black", size=2, shape=21) + 
+            scale_linetype_manual("MIT Model", labels="MIT", values=2,
+                                  guide=guide_legend(order=1,
+                                                     title.position="top")) +
             scale_colour_viridis_d("IHME Model",
-                                   labels=as.Date(unique(d.us.i()$model_date), 
+                                   labels=as.Date(unique(ihme.f.us()$model_date),
                                                   format="%Y_%m_%d") %>%
                                        format("%b %d"),
-                                   guide=guide_legend(order=2)) +
-            scale_fill_brewer("\n\n\nObserved", type="div", 
-                              guide=guide_legend(order=3)) +
-            scale_alpha_manual(NULL, values=0.4,
+                                   guide=guide_legend(order=2,
+                                                      title.position="top")) +
+            scale_fill_brewer("Observed", type="div",
+                              guide=guide_legend(order=3,
+                                                 title.position="top",
+                                                 keyheight=grid::unit(2, "mm"))) +
+            scale_alpha_manual("", values=0.4,
                                guide=guide_legend(order=4,
-                                                  title.position="bottom")) +
-            xlim(as.Date(input$d.dates.us[1]),
-                 as.Date(input$d.dates.us[2])) +
-            scale_y_continuous(labels=pretty_numbers, position="right") +
+                                                  title.position="top")) +
+            xlim(as.Date(input$f.dates.us[1]),
+                 as.Date(input$f.dates.us[2])) +
+            scale_y_continuous(labels=pretty_numbers, position="right") + 
             labs(x="", y="") +
-            facet_grid(factor(span, levels=c("Total", "Daily"))~., 
-                       scales="free_y", switch="y") +
+            facet_wrap(~SpanType, scales="free_y") +
             theme(axis.text=element_text(size=14),
-                  legend.text=element_text(size=14),
+                  legend.text=element_text(size=12),
                   axis.title=element_text(size=16),
-                  legend.title=element_text(size=16),
-                  title=element_text(size=18),
-                  strip.text=element_text(size=16))
-    }, width=600, height=675)
+                  legend.title=element_text(size=14), 
+                  title=element_text(size=18), 
+                  strip.text=element_text(size=16),
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="vertical")
+    }, width=700, height=725)
     
-    ###---- Plot: State comparisons
+    # output$state.c <- renderPlot({
+    #     ggplot(obs.c.us.i(), aes(Date)) +
+    #         geom_hline(yintercept=0, colour="gray30", size=0.25) +
+    #         {if("MIT" %in% input$c.modSource.us) {
+    #             geom_line(data=c.mit.us.i(), aes(y=Cases, linetype=modType),
+    #                       size=1, colour="red")
+    #         }} +
+    #         geom_line(data=obs.c.us.i(), aes(y=Cases.obs, alpha=src), method="loess", 
+    #                   stat="smooth", colour=1, size=1.5, span=0.6, formula=y~x) + 
+    #         geom_vline(data=obs.max.c.us.i(), aes(xintercept=Date), linetype=3) +
+    #         geom_text(data=obs.lab.c.us(), aes(y=Cases, label=lab), 
+    #                   fontface=c("italic", "plain"), nudge_x=c(0,2),
+    #                   size=obs.lab.c.us()$lab.size, hjust=0, vjust=1, colour=1) +
+    #         geom_rug(data=filter(obs.c.us.i(), Date==last(Date) & span=="Total"), 
+    #                  aes(y=Cases.obs), colour="black", sides="r") +
+    #         geom_point(aes(y=Cases.obs, fill=wDay), colour="black", 
+    #                    size=2, shape=21) + 
+    #         scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+    #                               guide=guide_legend(order=1)) +
+    #         scale_fill_brewer("Observed", type="div", 
+    #                           guide=guide_legend(order=2)) +
+    #         scale_alpha_manual("", values=0.4,
+    #                            guide=guide_legend(order=3,
+    #                                               title.position="bottom")) +
+    #         xlim(as.Date(input$c.dates.us[1]),
+    #              as.Date(input$c.dates.us[2])) +
+    #         scale_y_continuous(labels=pretty_numbers, position="right") + 
+    #         labs(x="", y="") +
+    #         facet_grid(factor(span, levels=c("Total", "Daily"))~., 
+    #                    scales="free_y", switch="y") +
+    #         theme(axis.text=element_text(size=14),
+    #               legend.text=element_text(size=14),
+    #               axis.title=element_text(size=16),
+    #               legend.title=element_text(size=16), 
+    #               title=element_text(size=18), 
+    #               strip.text=element_text(size=16))
+    #     
+    # }, width=600, height=675)
+    # 
+    # ###---- Plot: States vs. means
+    # output$state.d <- renderPlot({
+    #     ggplot(d.us.i(), aes(Date, Deaths, colour=model_date)) +
+    #         geom_hline(yintercept=0, colour="gray30", size=0.25) +
+    #         {if("MIT" %in% input$d.modSource.us) {
+    #             geom_line(data=d.mit.us.i(), aes(y=Deaths, linetype=modType),
+    #                       size=1, colour="red")
+    #         }} +
+    #         {if("IHME" %in% input$d.modSource.us) {
+    #             geom_text(data=d.us.i.starts(), aes(group=model_date),
+    #                       label="|", size=5, fontface="bold", family="mono")
+    #         }} +
+    #         {if("IHME" %in% input$d.modSource.us) {
+    #             geom_line(data=d.us.i(), aes(group=model_date), size=1)
+    #         }} +
+    #         geom_line(data=obs.d.us.i(), aes(y=Deaths.obs, alpha=src),
+    #                   method="loess", stat="smooth",
+    #                   colour=1, size=1.5, span=0.6, formula=y~x) +
+    #         geom_vline(data=obs.max.d.us.i(), aes(xintercept=Date), linetype=3) +
+    #         geom_text(data=obs.lab.d.us(), aes(label=lab), nudge_x=c(0,2),
+    #                   fontface=c("italic", "plain"),
+    #                   size=obs.lab.d.us()$lab.size, hjust=0, vjust=1, colour=1) +
+    #         geom_rug(data=filter(obs.d.us.i(), Date==last(Date) & span=="Total"), 
+    #                  aes(y=Deaths.obs), colour="black", sides="r") +
+    #         geom_point(data=obs.d.us.i(), aes(y=Deaths.obs, fill=wDay),
+    #                    colour="black", size=2, shape=21) +
+    #         scale_linetype_manual("MIT Model", labels="MIT", values=2, 
+    #                               guide=guide_legend(order=1)) +
+    #         scale_colour_viridis_d("IHME Model",
+    #                                labels=as.Date(unique(d.us.i()$model_date), 
+    #                                               format="%Y_%m_%d") %>%
+    #                                    format("%b %d"),
+    #                                guide=guide_legend(order=2)) +
+    #         scale_fill_brewer("\n\n\nObserved", type="div", 
+    #                           guide=guide_legend(order=3)) +
+    #         scale_alpha_manual(NULL, values=0.4,
+    #                            guide=guide_legend(order=4,
+    #                                               title.position="bottom")) +
+    #         xlim(as.Date(input$d.dates.us[1]),
+    #              as.Date(input$d.dates.us[2])) +
+    #         scale_y_continuous(labels=pretty_numbers, position="right") +
+    #         labs(x="", y="") +
+    #         facet_grid(factor(span, levels=c("Total", "Daily"))~., 
+    #                    scales="free_y", switch="y") +
+    #         theme(axis.text=element_text(size=14),
+    #               legend.text=element_text(size=14),
+    #               axis.title=element_text(size=16),
+    #               legend.title=element_text(size=16),
+    #               title=element_text(size=18),
+    #               strip.text=element_text(size=16))
+    # }, width=600, height=675)
+    
     output$state.comp <- renderPlot({
         ggplot(obs.comp.us(), 
                aes(Date, y=obs, colour=State)) +
@@ -704,7 +872,30 @@ server <- function(input, output) {
                   legend.box.margin=margin(-10,0,0,0),
                   legend.position="bottom",
                   legend.direction="horizontal")
-    }, width=600, height=625)
+    }, width=700, height=725)
+    
+    output$state.overview <- renderPlot({
+        obs.us.all() %>%
+            filter(Type==input$over.type & 
+                       span==input$over.span &
+                       Date >= input$over.dates[1] & 
+                       Date <= input$over.dates[2] &
+                       State %in% obs.max.us()$State) %>%
+            mutate(obs=ifelse(rep(input$over.pK, n()), obs/pop, obs)) %>%
+        ggplot(aes(x=Date, y=obs)) +
+            geom_hline(yintercept=0, colour="gray30", size=0.25) +
+            geom_ma(n=7, colour=1, size=0.9, linetype=1, alpha=0.8) + 
+            geom_point(alpha=0.5, size=0.5, shape=1) +
+            geom_vline(data=filter(obs.max.us(), Type==input$over.type),
+                       aes(xintercept=Date), linetype=3) +
+            scale_y_continuous(labels=pretty_numbers, position="right",
+                               limits=c(0,NA)) + 
+            scale_x_date(date_labels="%b", date_breaks="1 month") +
+            facet_wrap(~State, scales=ifelse(input$over.free, "free_y", "fixed")) +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=7.5, angle=330, hjust=0, vjust=0),
+                  strip.text=element_text(size=9))
+    }, width=800, height=750)
 }
 
 # Run the application 
