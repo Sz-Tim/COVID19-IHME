@@ -36,7 +36,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                                label="Free y-axis?",
                                                value=TRUE),
                                  tags$hr(),
-                                 "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the 7-day average. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
+                                 "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the moving average. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
                                  width=3),
                     mainPanel(plotOutput(outputId="state.overview"),
                               width=9)
@@ -72,7 +72,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                       label="Display per 10,000 people",
                                       value=FALSE),
                         tags$hr(),
-                        "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the 7-day average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
+                        "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the moving average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
                         tags$hr(),
                         "Mar 25: original release", tags$br(),
                         "Apr 16: most optimistic for US", tags$br(),
@@ -99,7 +99,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                            label="Display per 10k people",
                                            value=TRUE),
                              tags$hr(),
-                             "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
+                             "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the moving averages."
                          ),
                          mainPanel(plotOutput(outputId="state.comp", width="100%"))
                      )
@@ -136,7 +136,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                            label="Display per million people",
                                            value=FALSE),
                              tags$hr(),
-                             "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the 7-day average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
+                             "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the moving average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
                              tags$hr(),
                              "Mar 25: original release", tags$br(),
                              "Apr 16: most optimistic for US", tags$br(),
@@ -522,7 +522,11 @@ server <- function(input, output) {
             ggplot(aes(x=Date, y=obs)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
             geom_point(aes(fill=wDay), alpha=0.8, size=1, shape=21) +
-            geom_ma(n=7, colour=1, size=1, linetype=1, alpha=0.8) + 
+            {if(input$over.span=="Daily") {
+                # geom_ma(n=7, colour=1, size=1, linetype=1, alpha=0.8, ma_fun=EMA)
+                geom_line(stat="smooth", method="loess", 
+                          span=0.6, formula=y~x, size=1) 
+            }} +
             geom_vline(data=filter(obs.max.us(), Type==input$over.type),
                        aes(xintercept=Date), linetype=3) +
             scale_fill_brewer("Observed", type="div",
@@ -558,8 +562,10 @@ server <- function(input, output) {
                 geom_line(data=ihme.f.us(), size=1,
                           aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_ma(data=filter(obs.f.us(), span=="Daily"),
-                    aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
+            geom_line(stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
+            # geom_ma(data=filter(obs.f.us(), span=="Daily"),
+            #         aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
             geom_vline(data=obs.max.f.us(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.f.us(), aes(label=lab), 
                       fontface=c("italic", "plain", "plain"), nudge_x=c(0,2,2),
@@ -646,8 +652,10 @@ server <- function(input, output) {
                 geom_line(data=ihme.f.gl(), size=1,
                           aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_ma(data=filter(obs.f.gl(), span=="Daily"),
-                    aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
+            geom_line(stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
+            # geom_ma(data=filter(obs.f.gl(), span=="Daily"),
+            #         aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
             geom_vline(data=obs.max.f.gl(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.f.gl(), aes(label=lab), 
                       fontface=c("italic", "plain", "plain"), nudge_x=c(0,2,2),
