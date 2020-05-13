@@ -524,7 +524,7 @@ server <- function(input, output) {
             geom_point(aes(fill=wDay), alpha=0.8, size=1, shape=21) +
             {if(input$over.span=="Daily") {
                 # geom_ma(n=7, colour=1, size=1, linetype=1, alpha=0.8, ma_fun=EMA)
-                geom_line(stat="smooth", method="loess", 
+                geom_line(stat="smooth", method="loess", alpha=0.8,
                           span=0.6, formula=y~x, size=1) 
             }} +
             geom_vline(data=filter(obs.max.us(), Type==input$over.type),
@@ -562,8 +562,9 @@ server <- function(input, output) {
                 geom_line(data=ihme.f.us(), size=1,
                           aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_line(stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
+            geom_line(data=filter(obs.f.us(), span=="Daily"), aes(alpha=src),
+                      stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1.5) +
             # geom_ma(data=filter(obs.f.us(), span=="Daily"),
             #         aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
             geom_vline(data=obs.max.f.us(), aes(xintercept=Date), linetype=3) +
@@ -652,8 +653,9 @@ server <- function(input, output) {
                 geom_line(data=ihme.f.gl(), size=1,
                           aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_line(stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
+            geom_line(data=filter(obs.f.gl(), span=="Daily"), aes(alpha=src),
+                      stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1.5) +
             # geom_ma(data=filter(obs.f.gl(), span=="Daily"),
             #         aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
             geom_vline(data=obs.max.f.gl(), aes(xintercept=Date), linetype=3) +
