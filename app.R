@@ -1,6 +1,6 @@
 
 
-library(shiny); library(tidyverse); library(tidyquant)
+library(shiny); library(tidyverse); 
 theme_set(theme_bw() + theme(panel.grid=element_blank()))
 source("fn.R")
 obs <- load_obs()
@@ -76,7 +76,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                         tags$hr(),
                         "Mar 25: original release", tags$br(),
                         "Apr 16: most optimistic for US", tags$br(),
-                        "May 08: most pessimistic for US", tags$br(),
+                        "May 10: most pessimistic for US", tags$br(),
                         paste0(latest.mod.bd, ":"), "most recent"
                     ),
                     mainPanel(plotOutput(outputId="state.focus"))
@@ -140,7 +140,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                              tags$hr(),
                              "Mar 25: original release", tags$br(),
                              "Apr 16: most optimistic for US", tags$br(),
-                             "May 08: most pessimistic for US", tags$br(),
+                             "May 10: most pessimistic for US", tags$br(),
                              paste0(latest.mod.bd, ":"), "most recent"
                          ),
                          mainPanel(plotOutput(outputId="country.focus"))
