@@ -103,6 +103,25 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                          ),
                          mainPanel(plotOutput(outputId="state.comp", width="100%"))
                      )
+            ),
+            tabPanel("Fatality Rate",
+                     tags$h4("Compare Case Fatality Rates in", tags$b("US States")),
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="cfr.state",
+                                         label="Choose states to show",
+                                         choices=sort(unique(obs$obs.c.us$State)),
+                                         selected=c("Colorado", "Georgia", "Illinois"),
+                                         multiple=TRUE),
+                             dateRangeInput(inputId="cfr.dates.us",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end=Sys.Date(),
+                                            min="2020-01-03", max=Sys.Date()),
+                             tags$hr(),
+                             "The", tags$b("points"), "show the Case Fatality Rate (CFR = deaths/cases) with the", tags$b("lines"), "as the moving averages."
+                         ),
+                         mainPanel(plotOutput(outputId="state.cfr", width="100%"))
+                     )
             )
         ),
         navbarMenu("Countries",
@@ -166,6 +185,25 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                              "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
                          ),
                          mainPanel(plotOutput(outputId="country.comp", width="100%"))
+                     )
+            ),
+            tabPanel("Fatality Rate",
+                     tags$h4("Compare Case Fatality Rates across", tags$b("countries")),
+                     sidebarLayout(
+                         sidebarPanel(
+                             selectInput(inputId="cfr.country",
+                                         label="Choose countries to show",
+                                         choices=sort(unique(obs$obs.c.gl$Country)),
+                                         selected=c("Switzerland", "Italy", "US"),
+                                         multiple=TRUE),
+                             dateRangeInput(inputId="cfr.dates.gl",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end=Sys.Date(),
+                                            min="2020-01-03", max=Sys.Date()),
+                             tags$hr(),
+                             "The", tags$b("points"), "show the Case Fatality Rate (CFR = deaths/cases) with the", tags$b("lines"), "as the smoothed averages."
+                         ),
+                         mainPanel(plotOutput(outputId="country.cfr", width="100%"))
                      )
             )
         ),
@@ -244,7 +282,6 @@ server <- function(input, output) {
                                    levels=c(unique(paste(span, Type)))))
     })
     
-    
     obs.max.f.gl <- reactive({
         bind_rows(
             obs$obs.c.gl.max %>% filter(Country==input$f.country &
@@ -260,6 +297,18 @@ server <- function(input, output) {
         ) %>% mutate(span="Daily",
                      SpanType=factor(paste(span, Type), 
                                      levels=c(unique(paste(span, Type)))))
+    })
+    
+    obs.cfr.gl <- reactive({
+        full_join(obs$obs.c.gl %>% 
+                      filter(span=="Total" & Country %in% input$cfr.country), 
+                  obs$obs.d.gl %>% 
+                      filter(span=="Total" & Country %in% input$cfr.country) %>%
+                      select(Country, Date, Deaths.obs), 
+                  by=c("Country", "Date")) %>%
+            filter(Date >= input$cfr.dates.gl[1] & 
+                       Date <= input$cfr.dates.gl[2]) %>%
+            mutate(CFR=Deaths.obs/Cases.obs)
     })
     
     mit.f.gl <- reactive({
@@ -383,6 +432,18 @@ server <- function(input, output) {
         ) %>% mutate(span="Daily",
                      SpanType=factor(paste(span, Type), 
                                      levels=c(unique(paste(span, Type)))))
+    })
+    
+    obs.cfr.us <- reactive({
+        full_join(obs$obs.c.us %>% 
+                      filter(span=="Total" & State %in% input$cfr.state), 
+                  obs$obs.d.us %>% 
+                      filter(span=="Total" & State %in% input$cfr.state) %>%
+                      select(State, Date, Deaths.obs), 
+                  by=c("State", "Date")) %>%
+            filter(Date >= input$cfr.dates.us[1] & 
+                       Date <= input$cfr.dates.us[2]) %>%
+            mutate(CFR=Deaths.obs/Cases.obs)
     })
     
     
@@ -635,6 +696,29 @@ server <- function(input, output) {
                   legend.direction="horizontal")
     }, width=700, height=725)
     
+    output$state.cfr <- renderPlot({
+        ggplot(obs.cfr.us(), aes(Date, y=CFR, colour=State)) +
+            geom_hline(yintercept=0, colour="gray30", size=0.5) +
+            geom_line(aes(group=State), stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
+            geom_text(data=filter(obs.cfr.us(), Date==last(Date)), 
+                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
+            geom_point(alpha=0.5, size=1) + 
+            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
+            scale_y_continuous(labels=scales::percent_format(accuracy=1), 
+                               position="right", limits=c(0,NA)) + 
+            xlim(as.Date(input$cfr.dates.us[1]),
+                 as.Date(input$cfr.dates.us[2]+4)) +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=13),
+                  legend.text=element_text(size=14),
+                  legend.title=element_text(size=16), 
+                  title=element_text(size=18), 
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="horizontal")
+    })
+    
     
     ###---- Plots: Countries ---------------------------------------------------
     output$country.focus <- renderPlot({
@@ -725,6 +809,29 @@ server <- function(input, output) {
                   legend.position="bottom",
                   legend.direction="horizontal")
     }, width=700, height=725)
+    
+    output$country.cfr <- renderPlot({
+        ggplot(obs.cfr.gl(), aes(Date, y=CFR, colour=Country)) +
+            geom_hline(yintercept=0, colour="gray30", size=0.5) +
+            geom_line(aes(group=Country), stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
+            geom_text(data=filter(obs.cfr.gl(), Date==last(Date)), 
+                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
+            geom_point(alpha=0.5, size=1) + 
+            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
+            scale_y_continuous(labels=scales::percent_format(accuracy=1), 
+                               position="right", limits=c(0,NA)) + 
+            xlim(as.Date(input$cfr.dates.gl[1]),
+                 as.Date(input$cfr.dates.gl[2]+4)) +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=13),
+                  legend.text=element_text(size=14),
+                  legend.title=element_text(size=16), 
+                  title=element_text(size=18), 
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="horizontal")
+    })
 }
 
 # Run the application 
