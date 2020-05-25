@@ -286,24 +286,20 @@ refresh_peak_plots <- function(obs) {
                             by=c("Country", "abbr", "pop")) %>%
     mutate(DaysDiff=as.numeric(Death.Date-Case.Date)) %>%
     filter(!is.na(DaysDiff))
-  mn.days.gl <- mean(date.comp.gl$DaysDiff)
   mn.daysG0.gl <- mean(filter(date.comp.gl, DaysDiff>0)$DaysDiff)
   gl.max.y <- max(hist(date.comp.gl$DaysDiff, plot=F,
                        breaks=seq(min(date.comp.gl$DaysDiff)-3, 
                                   max(date.comp.gl$DaysDiff)+3, 
                                   by=3))$count)
   country.comp <- ggplot(date.comp.gl, aes(x=DaysDiff)) + 
-    geom_histogram(binwidth=3) +
-    geom_segment(aes(x=mn.days.gl, xend=mn.days.gl,
-                     y=0, yend=gl.max.y), linetype=2) +
+    geom_hline(yintercept=0, colour="gray30", size=0.25) +
+    geom_histogram(binwidth=3, aes(fill=DaysDiff>0), alpha=0.75) +
     geom_segment(aes(x=mn.daysG0.gl, xend=mn.daysG0.gl,
-                     y=0, yend=gl.max.y*0.8), linetype=2, colour="darkblue") +
-    annotate("text", size=5, hjust=0, vjust=1, x=mn.days.gl, y=gl.max.y, 
-             label=paste(" Average delay\n (all countries)\n ", 
-                         round(mn.days.gl, 1), "days")) +
-    annotate("text", size=5, hjust=0, vjust=1, x=mn.daysG0.gl, y=gl.max.y*0.8, 
-             label=paste(" Average delay\n (positive only)\n ", 
+                     y=0, yend=gl.max.y*1.2), linetype=2, colour="darkblue") +
+    annotate("text", size=5, hjust=0, vjust=1, x=mn.daysG0.gl, y=gl.max.y*1.2, 
+             label=paste("  Average delay\n ", 
                          round(mn.daysG0.gl, 1), "days"), colour="darkblue") +
+    scale_fill_manual(values=c("gray", "darkblue"),  guide=F) +
     theme(axis.text=element_text(size=14),
           axis.title=element_text(size=16),
           title=element_text(size=18)) +
@@ -388,24 +384,20 @@ refresh_peak_plots <- function(obs) {
                             by=c("State", "abbr", "pop")) %>%
     mutate(DaysDiff=as.numeric(Death.Date-Case.Date)) %>%
     filter(!is.na(DaysDiff))
-  mn.days.us <- mean(date.comp.us$DaysDiff)
   mn.daysG0.us <- mean(filter(date.comp.us, DaysDiff>0)$DaysDiff)
   us.max.y <- max(hist(date.comp.us$DaysDiff, plot=F,
                        breaks=seq(min(date.comp.us$DaysDiff)-3, 
                                   max(date.comp.us$DaysDiff)+3, 
                                   by=3))$count)
   state.comp <- ggplot(date.comp.us, aes(x=DaysDiff)) + 
-    geom_histogram(binwidth=3) +
-    geom_segment(aes(x=mn.days.us, xend=mn.days.us,
-                     y=0, yend=us.max.y), linetype=2) +
+    geom_hline(yintercept=0, colour="gray30", size=0.25) +
+    geom_histogram(binwidth=3, aes(fill=DaysDiff>0), alpha=0.75) +
     geom_segment(aes(x=mn.daysG0.us, xend=mn.daysG0.us,
-                     y=0, yend=us.max.y*0.8), linetype=2, colour="darkblue") +
-    annotate("text", size=5, hjust=0, vjust=1, x=mn.days.us, y=us.max.y, 
-             label=paste(" Average delay\n (all states)\n ", 
-                         round(mn.days.us, 1), "days")) +
-    annotate("text", size=5, hjust=0, vjust=1, x=mn.daysG0.us, y=us.max.y*0.8, 
-             label=paste(" Average delay\n (positive only)\n ", 
+                     y=0, yend=us.max.y*1.2), linetype=2, colour="darkblue") +
+    annotate("text", size=5, hjust=0, vjust=1, x=mn.daysG0.us, y=us.max.y*1.2, 
+             label=paste("  Average delay:\n ", 
                          round(mn.daysG0.us, 1), "days"), colour="darkblue") +
+    scale_fill_manual(values=c("gray", "darkblue"),  guide=F) +
     theme(axis.text=element_text(size=14),
           axis.title=element_text(size=16),
           title=element_text(size=18)) +
