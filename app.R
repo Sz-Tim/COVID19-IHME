@@ -223,7 +223,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                      )
             ),
             tabPanel("Compare",
-                     tags$h4("How much time is between the peaks in", tags$b("new cases"), "and", tags$b("deaths"), "?"),
+                     tags$h4("How long after the peak in", tags$b("new cases"), "before the peak in", tags$b("deaths"), "?"),
                      fluidRow(
                          column(6, tags$img(src="country_comp_peak.png", width='95%')),
                          column(6, tags$img(src="states_comp_peak.png", width='95%'))
