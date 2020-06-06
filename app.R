@@ -104,7 +104,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                          mainPanel(plotOutput(outputId="state.comp", width="100%"))
                      )
             ),
-            tabPanel("Fatality Rate",
+            tabPanel("Fatality Rates",
                      tags$h4("Compare Case Fatality Rates in", tags$b("US States")),
                      sidebarLayout(
                          sidebarPanel(
@@ -121,6 +121,29 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                              "The", tags$b("points"), "show the Case Fatality Rate (CFR = deaths/cases) with the", tags$b("lines"), "as the moving averages."
                          ),
                          mainPanel(plotOutput(outputId="state.cfr", width="100%"))
+                     )
+            ),
+            tabPanel("Testing Rates",
+                     tags$h4("Testing trends in", tags$b("US States")),
+                     sidebarLayout(
+                         sidebarPanel(radioButtons(inputId="test.type",
+                                                   label="Choose metric",
+                                                   choices=c("Percent positive", 
+                                                             "Total", 
+                                                             "Per capita"),
+                                                   selected="Percent positive"),
+                                      dateRangeInput(inputId="test.dates",
+                                                     label="Choose dates to display",
+                                                     start="2020-04-01", end=Sys.Date(),
+                                                     min="2020-01-22", max=Sys.Date()),
+                                      checkboxInput(inputId="test.free",
+                                                    label="Free y-axis?",
+                                                    value=FALSE),
+                                      tags$hr(),
+                                      "Adequate testing is essential for identifying new outbreaks early when they can be more easily stopped. One measure of whether the number of tests is sufficient is the percentage of tests that are positive. The CDC and WHO recommend that this number should be at least below 10%", tags$b("(light green)"), "and ideally below 5%", tags$b("(green),"), "to be confident that new outbreaks can be identified.",
+                                      width=3),
+                         mainPanel(plotOutput(outputId="state.testing"),
+                                   width=9)
                      )
             )
         ),
@@ -239,7 +262,21 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                  "The models produced by the", tags$a("Institute for Health Metrics and Evaluation", href="http://www.healthdata.org/covid/data-downloads"), "(IHME), also known as the 'Chris Murray models', originally used a simple curve-fitting approach, but have built in additional complexity with time. The", tags$a("MIT", href="https://www.covidanalytics.io/projections"), "model uses machine-learning techniques along with a more traditional SEIR disease model.",
                                  tags$br(), 
                                  tags$br(), 
-                                 "The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models approximately twice each week, while both MIT and Johns Hopkins releases new predictions or data each day. No corrections have been made for testing effort.")),
+                                 "The observed data come from", tags$a("Johns Hopkins.", href="https://github.com/CSSEGISandData/COVID-19/tree/master/csse_covid_19_data"), "IHME releases updated models approximately twice each week, while both MIT and Johns Hopkins releases new predictions or data each day. No corrections have been made for testing effort.",
+                                 tags$br(),
+                                 tags$br(),
+                                 "The testing data came from", tags$a("the COVID Tracking Project.", href="https://covidtracking.com/"), "Data are compiled by volunteers from governmental sources and updated daily.",
+                                 tags$br(),
+                                 tags$br(),
+                                 tags$b("Additional resources"),
+                                 tags$br(),
+                                 tags$a("Johns Hopkins Dashboard", href="https://www.arcgis.com/apps/opsdashboard/index.html#/bda7594740fd40299423467b48e9ecf6"),
+                                 tags$br(),
+                                 tags$a("COVID Exit Strategy", href="https://www.covidexitstrategy.org/"),
+                                 tags$br(),
+                                 tags$a("Rt Live", href="https://rt.live/"),
+                                 tags$br(), 
+                                 tags$a("nCov-19", href="https://ncov2019.live/"))),
                  tags$hr(),
                  fluidRow(column(12, align="center",
                                  tags$br(),
@@ -408,6 +445,12 @@ server <- function(input, output) {
     
     
     ###---- Reactives: US States -----------------------------------------------
+    obs.us.test <- reactive({
+        obs$test.us %>% 
+            filter(Date >= input$test.dates[1] & 
+                       Date <= input$test.dates[2]) 
+    })
+    
     obs.us.all <- reactive({
         bind_rows(
             obs$obs.c.us %>% ungroup %>%
@@ -718,6 +761,46 @@ server <- function(input, output) {
                   legend.position="bottom",
                   legend.direction="horizontal")
     })
+    
+    output$state.testing <- renderPlot({
+        ggplot(obs.us.test(), aes(x=Date)) +
+            {if(input$test.type=="Percent positive") {
+                geom_ribbon(aes(ymin=0, ymax=0.05), fill="#a1d99b", 
+                            color="gray70", size=0.25)
+            }} +
+            {if(input$test.type=="Percent positive") {
+                geom_ribbon(aes(ymin=0.05, ymax=0.1), fill="#e5f5e0", 
+                            color="gray70", size=0.25)
+            }} +
+            geom_hline(yintercept=0, colour="gray30", size=0.25) +
+            {if(input$test.type=="Percent positive") {
+                geom_line(aes(y=propPos)) 
+            }} +
+            {if(input$test.type=="Percent positive") {
+                scale_y_continuous("Percent positive", 
+                                   labels=scales::percent_format(accuracy=1))
+            }} +
+            {if(input$test.type=="Per capita") {
+                geom_line(aes(y=total/pop)) 
+            }} +
+            {if(input$test.type=="Per capita") {
+                scale_y_continuous("Tests per 10,000 people", 
+                                   labels=pretty_numbers)
+            }} +
+            {if(input$test.type=="Total") {
+                geom_line(aes(y=total)) 
+            }} +
+            {if(input$test.type=="Total") {
+                scale_y_continuous("Total tests", 
+                                   labels=pretty_numbers)
+            }} +
+            scale_x_date(date_labels="%b", date_breaks="1 month") +
+            facet_wrap(~State, scales=ifelse(input$test.free, "free_y", "fixed")) +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=7.5),
+                  strip.text=element_text(size=9),
+                  legend.position=c(0.75, 0.065))
+    }, width=850, height=750)
     
     
     ###---- Plots: Countries ---------------------------------------------------

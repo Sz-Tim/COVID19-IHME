@@ -45,7 +45,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
                                     "data/predicted/Global.csv"),
                      jhu.repo=paste0("https://raw.githubusercontent.com/",
                                      "CSSEGISandData/",
-                                     "COVID-19/master/")) {
+                                     "COVID-19/master/"),
+                     test.url="https://covidtracking.com/api/v1/states/daily.csv") {
   library(tidyverse)
   wkdays <- c("Su","M","T","W","R","F","Sa")
   ts.url <- paste0(jhu.repo, "csse_covid_19_data/csse_covid_19_time_series/")
@@ -53,6 +54,15 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
   pop.us <- read_csv("statePops.csv") %>% mutate(pop_pK=Population/1e4)
   abbr.gl <- read_csv("countryCodes.csv", na=character())
   abbr.us <- read_csv("stateCodes.csv")
+  
+  test.us <- read_csv(test.url) %>% select(date, state, positive, negative) %>%
+    mutate(Date=lubridate::ymd(date), 
+           total=positive+negative,
+           propPos=positive/total,
+           State=abbr.us$State[match(state, abbr.us$Code)],
+           pop=pop.us$pop_pK[match(State, pop.us$State)]) %>%
+    filter(!is.na(State)) %>%
+    filter(State %in% c(state.name, "Puerto Rico", "District of Columbia"))
   
   
   #--- IHME predictions --------------------------------------------------------
@@ -197,7 +207,8 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
               gl.df=gl.df, mit.gl=mit.gl,
               obs.d.us=obs.d.us, obs.d.us.max=obs.d.us.max, 
               obs.c.us=obs.c.us, obs.c.us.max=obs.c.us.max, 
-              us.df=us.df, mit.us=mit.us))
+              us.df=us.df, mit.us=mit.us, 
+              test.us=test.us))
 }
 
 
@@ -225,10 +236,10 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.d.gl$Date),
                             min(obs$obs.d.gl.max$Date), 
-                            by=-7), minor_breaks=NULL,
+                            by=-28), minor_breaks=NULL,
                  labels=as.Date(seq(max(obs$obs.d.gl$Date),
                                     min(obs$obs.d.gl.max$Date), 
-                                    by=-7), format="%Y_%m_%d") %>%
+                                    by=-28), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
@@ -260,10 +271,10 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.c.gl$Date),
                             min(obs$obs.c.gl.max$Date), 
-                            by=-14), minor_breaks=NULL,
+                            by=-28), minor_breaks=NULL,
                  labels=as.Date(seq(max(obs$obs.c.gl$Date),
                                     min(obs$obs.c.gl.max$Date), 
-                                    by=-14), format="%Y_%m_%d") %>%
+                                    by=-28), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
@@ -323,10 +334,10 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.d.us$Date),
                             min(obs$obs.d.us.max$Date), 
-                            by=-7), minor_breaks=NULL, 
+                            by=-14), minor_breaks=NULL, 
                  labels=as.Date(seq(max(obs$obs.d.us$Date),
                                     min(obs$obs.d.us.max$Date), 
-                                    by=-7), format="%Y_%m_%d") %>%
+                                    by=-14), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
@@ -358,10 +369,10 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.c.us$Date),
                             min(obs$obs.c.us.max$Date), 
-                            by=-7), minor_breaks=NULL, 
+                            by=-14), minor_breaks=NULL, 
                  labels=as.Date(seq(max(obs$obs.c.us$Date),
                                     min(obs$obs.c.us.max$Date), 
-                                    by=-7), format="%Y_%m_%d") %>%
+                                    by=-14), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
