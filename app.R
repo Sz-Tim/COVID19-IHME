@@ -76,7 +76,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                         tags$hr(),
                         "Mar 25: original release", tags$br(),
                         "Apr 16: most optimistic for US", tags$br(),
-                        "Jun 03: most pessimistic for US", tags$br(),
+                        "Jun 13: most pessimistic for US", tags$br(),
                         paste0(latest.mod.bd, ":"), "most recent"
                     ),
                     mainPanel(plotOutput(outputId="state.focus"))
@@ -182,7 +182,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                              tags$hr(),
                              "Mar 25: original release", tags$br(),
                              "Apr 16: most optimistic for US", tags$br(),
-                             "Jun 03: most pessimistic for US", tags$br(),
+                             "Jun 13: most pessimistic for US", tags$br(),
                              paste0(latest.mod.bd, ":"), "most recent"
                          ),
                          mainPanel(plotOutput(outputId="country.focus"))
