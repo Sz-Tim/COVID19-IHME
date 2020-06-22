@@ -34,9 +34,9 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                                value=TRUE),
                                  checkboxInput(inputId="over.free",
                                                label="Free y-axis?",
-                                               value=TRUE),
+                                               value=FALSE),
                                  tags$hr(),
-                                 "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the moving average. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
+                                 "The", tags$b("blue bars"), "show the average daily cases or deaths for each week. The", tags$b("brown curves"), "show the cumulative total cases or deaths. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period. By default, plots show the cases or deaths", tags$b("per 10,000 people."),
                                  width=3),
                     mainPanel(plotOutput(outputId="state.overview"),
                               width=9)
@@ -148,6 +148,34 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
             )
         ),
         navbarMenu("Countries",
+            tabPanel("Overview",
+                     tags$h4("Overview of", tags$b("Countries")),
+                     sidebarLayout(
+                         sidebarPanel(radioButtons(inputId="over.type.gl",
+                                                   label="Choose metric",
+                                                   choices=c("Cases", "Deaths"),
+                                                   selected="Cases"),
+                                      radioButtons(inputId="over.span.gl",
+                                                   label="Choose span",
+                                                   choices=c("Daily", "Total"),
+                                                   selected="Daily"),
+                                      dateRangeInput(inputId="over.dates.gl",
+                                                     label="Choose dates to display",
+                                                     start="2020-03-01", end=Sys.Date(),
+                                                     min="2020-01-03", max=Sys.Date()),
+                                      checkboxInput(inputId="over.pK.gl",
+                                                    label="Display per million people",
+                                                    value=TRUE),
+                                      checkboxInput(inputId="over.free.gl",
+                                                    label="Free y-axis?",
+                                                    value=TRUE),
+                                      tags$hr(),
+                                      "The", tags$b("blue bars"), "show the average daily cases or deaths for each week. The", tags$b("brown curves"), "show the cumulative total cases or deaths. Note that only the 25% hardest hit countries are shown, as measured by total cases. By default, plots show the cases or deaths", tags$b("per million people."),
+                                             width=3),
+                                mainPanel(plotOutput(outputId="country.overview"),
+                                          width=9)
+                            )
+                   ),
             tabPanel("Select",
                      tags$h4("Select a", tags$b("country")),
                      sidebarLayout(
@@ -294,6 +322,30 @@ server <- function(input, output) {
     
     ###---- Reactives: Countries -----------------------------------------------
     
+    # Overview
+    obs.gl.all <- reactive({
+        bind_rows(
+            obs$obs.c.gl %>% ungroup %>%
+                mutate(Type="Cases",
+                       obs=Cases.obs) %>%
+                select(-Cases.obs),
+            obs$obs.d.gl %>% ungroup %>%
+                mutate(Type="Deaths",
+                       obs=Deaths.obs) %>%
+                select(-Deaths.obs)
+        ) %>% arrange(desc(span), Type) %>%
+            mutate(src="Average",
+                   SpanType=factor(paste(span, Type), 
+                                   levels=c(unique(paste(span, Type)))),
+                   week=lubridate::floor_date(Date, unit="week")) %>%
+            group_by(Country) %>% mutate(maxCases=max(obs, na.rm=T)) %>%
+            ungroup() %>% 
+            filter(maxCases > quantile(unique(maxCases), 0.75)) %>%
+            filter(!is.na(pop)) %>% 
+            group_by(Country, abbr, week, span, Type, SpanType) %>%
+            summarise(obs=mean(obs, na.rm=T), pop=first(pop))
+    })
+    
     # Focus 
     obs.f.gl <- reactive({
         bind_rows(
@@ -430,7 +482,7 @@ server <- function(input, output) {
                 select(-pop, -wDay, -Deaths.obs)
         ) %>% arrange(desc(span), Type) %>%
             mutate(SpanType=factor(paste(span, Type), 
-                                   levels=c(unique(paste(span, Type)))))
+                                   levels=c(unique(paste(span, Type))))) 
     })
     
     obs.lab.comp.gl <- reactive({
@@ -462,10 +514,13 @@ server <- function(input, output) {
                        obs=Deaths.obs) %>%
                 select(-Deaths.obs)
         ) %>% arrange(desc(span), Type) %>%
+            filter(!State %in% c("Grand Princess", "Diamond Princess")) %>%
             mutate(src="Average",
                    SpanType=factor(paste(span, Type), 
-                                   levels=c(unique(paste(span, Type))))) %>%
-            filter(!State %in% c("Grand Princess", "Diamond Princess"))
+                                   levels=c(unique(paste(span, Type)))),
+                   week=lubridate::floor_date(Date, unit="week")) %>%
+            group_by(State, abbr, week, span, Type, SpanType) %>%
+            summarise(obs=mean(obs, na.rm=T), pop=first(pop))
     })
     
     obs.max.us <- reactive({
@@ -619,17 +674,18 @@ server <- function(input, output) {
     output$state.overview <- renderPlot({
         obs.us.all() %>% filter(Type==input$over.type & 
                                     span==input$over.span &
-                                    Date >= input$over.dates[1] & 
-                                    Date <= input$over.dates[2] &
+                                    week >= input$over.dates[1] & 
+                                    week <= input$over.dates[2] &
                                     State %in% obs.max.us()$State) %>%
             mutate(obs=ifelse(rep(input$over.pK, n()), obs/pop, obs)) %>%
-            ggplot(aes(x=Date, y=obs)) +
+            ggplot(aes(x=week, y=obs)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
-            geom_point(aes(fill=wDay), alpha=0.8, size=1, shape=21) +
             {if(input$over.span=="Daily") {
-                # geom_ma(n=7, colour=1, size=1, linetype=1, alpha=0.8, ma_fun=EMA)
-                geom_line(stat="smooth", method="loess", alpha=0.8,
-                          span=0.6, formula=y~x, size=1) 
+                geom_bar(stat="identity", fill="#225ea8", colour="#225ea8")
+            }} +
+            {if(input$over.span=="Total") {
+                geom_ribbon(aes(ymax=obs), ymin=0, alpha=0.8,
+                            fill="#662506", colour="#662506")
             }} +
             geom_vline(data=filter(obs.max.us(), Type==input$over.type),
                        aes(xintercept=Date), linetype=3) +
@@ -669,8 +725,6 @@ server <- function(input, output) {
             geom_line(data=filter(obs.f.us(), span=="Daily"), aes(alpha=src),
                       stat="smooth", method="loess", 
                       span=0.6, formula=y~x, size=1.5) +
-            # geom_ma(data=filter(obs.f.us(), span=="Daily"),
-            #         aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
             geom_vline(data=obs.max.f.us(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.f.us(), aes(label=lab), 
                       fontface=c("italic", "plain", "plain"), nudge_x=c(0,2,2),
@@ -804,6 +858,39 @@ server <- function(input, output) {
     
     
     ###---- Plots: Countries ---------------------------------------------------
+    output$country.overview <- renderPlot({
+        obs.gl.all() %>% filter(Type==input$over.type.gl & 
+                                    span==input$over.span.gl &
+                                    week >= input$over.dates.gl[1] & 
+                                    week <= input$over.dates.gl[2]) %>%
+            mutate(obs=ifelse(rep(input$over.pK.gl, n()), obs/pop, obs)) %>%
+            ggplot(aes(x=week, y=obs)) +
+            geom_hline(yintercept=0, colour="gray30", size=0.25) +
+            {if(input$over.span.gl=="Daily") {
+                geom_bar(stat="identity", fill="#225ea8", colour="#225ea8")
+            }} +
+            {if(input$over.span.gl=="Total") {
+                geom_ribbon(aes(ymax=obs), ymin=0, alpha=0.8,
+                            fill="#662506", colour="#662506")
+            }} +
+            scale_fill_brewer("Observed", type="div",
+                              guide=guide_legend(title.position="top", 
+                                                 title.hjust=0, 
+                                                 label.hjust=0,
+                                                 nrow=1,
+                                                 direction="horizontal",
+                                                 override.aes=list(size=2))) +
+            scale_y_continuous(labels=pretty_numbers, position="right",
+                               limits=c(0,NA)) + 
+            scale_x_date(date_labels="%b", date_breaks="1 month") +
+            facet_wrap(~Country, scales=ifelse(input$over.free.gl, 
+                                             "free_y", "fixed")) +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=7.5, angle=330, hjust=0, vjust=0),
+                  strip.text=element_text(size=9),
+                  legend.position=c(0.75, 0.065))
+    }, width=850, height=750)
+    
     output$country.focus <- renderPlot({
         ggplot(obs.f.gl(), aes(Date, obs)) +
             geom_hline(yintercept=0, colour="gray30", size=0.25) +
