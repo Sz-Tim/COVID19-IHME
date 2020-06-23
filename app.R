@@ -547,7 +547,19 @@ server <- function(input, output) {
     
     # Focus 
     obs.f.us <- reactive({
-        obs.us.all() %>% 
+        bind_rows(
+            obs$obs.c.us %>% ungroup %>%
+                mutate(Type="Cases",
+                       obs=Cases.obs) %>%
+                select(-Cases.obs),
+            obs$obs.d.us %>% ungroup %>%
+                mutate(Type="Deaths",
+                       obs=Deaths.obs) %>%
+                select(-Deaths.obs)
+        ) %>% arrange(desc(span), Type) %>%
+            mutate(src="Average",
+                   SpanType=factor(paste(span, Type), 
+                                   levels=c(unique(paste(span, Type))))) %>% 
             filter(State == input$f.state & !is.na(obs) &
                        Date >= input$f.dates.us[1] & 
                        Date <= input$f.dates.us[2]) %>%
