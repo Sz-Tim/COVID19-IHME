@@ -373,14 +373,10 @@ server <- function(input, output) {
     
     obs.max.f.gl <- reactive({
         bind_rows(
-            obs$obs.c.gl.max %>% filter(Country==input$f.country &
-                                            Date >= input$f.dates.gl[1] & 
-                                            Date <= input$f.dates.gl[2]) %>%
+            obs$obs.c.gl.max %>% filter(Country==input$f.country) %>%
                 mutate(Type="Cases", 
                        obs=ifelse(input$f.pK.gl, obs/pop, obs)),
-            obs$obs.d.gl.max %>% filter(Country==input$f.country &
-                                            Date >= input$f.dates.gl[1] & 
-                                            Date <= input$f.dates.gl[2]) %>%
+            obs$obs.d.gl.max %>% filter(Country==input$f.country) %>%
                 mutate(Type="Deaths", 
                        obs=ifelse(input$f.pK.gl, obs/pop, obs))
         ) %>% mutate(span="Daily",
