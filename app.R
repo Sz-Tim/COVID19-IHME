@@ -692,8 +692,7 @@ server <- function(input, output) {
                 geom_bar(stat="identity", fill="#225ea8", colour="#225ea8")
             }} +
             {if(input$over.span=="Total") {
-                geom_ribbon(aes(ymax=obs), ymin=0, alpha=0.8,
-                            fill="#662506", colour="#662506")
+                geom_line(colour="#662506", size=1)
             }} +
             geom_vline(data=filter(obs.max.us(), Type==input$over.type),
                        aes(xintercept=Date), linetype=3) +
@@ -878,8 +877,7 @@ server <- function(input, output) {
                 geom_bar(stat="identity", fill="#225ea8", colour="#225ea8")
             }} +
             {if(input$over.span.gl=="Total") {
-                geom_ribbon(aes(ymax=obs), ymin=0, alpha=0.8,
-                            fill="#662506", colour="#662506")
+                geom_line(colour="#662506", size=1)
             }} +
             scale_fill_brewer("Observed", type="div",
                               guide=guide_legend(title.position="top", 
