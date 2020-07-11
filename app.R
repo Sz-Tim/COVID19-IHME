@@ -564,14 +564,10 @@ server <- function(input, output) {
     
     obs.max.f.us <- reactive({
         bind_rows(
-            obs$obs.c.us.max %>% filter(State==input$f.state &
-                                            Date >= input$f.dates.us[1] & 
-                                            Date <= input$f.dates.us[2]) %>%
+            obs$obs.c.us.max %>% filter(State==input$f.state) %>%
                 mutate(Type="Cases", 
                        obs=ifelse(input$f.pK.us, obs/pop, obs)),
-            obs$obs.d.us.max %>% filter(State==input$f.state &
-                                            Date >= input$f.dates.us[1] & 
-                                            Date <= input$f.dates.us[2]) %>%
+            obs$obs.d.us.max %>% filter(State==input$f.state) %>%
                 mutate(Type="Deaths", 
                        obs=ifelse(input$f.pK.us, obs/pop, obs))
         ) %>% mutate(span="Daily",
