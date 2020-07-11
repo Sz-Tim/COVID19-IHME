@@ -262,9 +262,9 @@ refresh_peak_plots <- function(obs) {
     geom_linerange(size=4) + coord_flip() + 
     scale_colour_gradient("Total new cases in 7-day period",  
                           low="#fff5f0" , high="red",
-                          trans="log", limits=c(1, 300000),
-                          breaks=c(30, 300, 3e3, 3e4, 3e5),
-                          labels=c("30", "300", "3000", "30,000", "300,000"), 
+                          trans="log", limits=c(1, 500000),
+                          breaks=c(50, 500, 5e3, 5e4, 5e5),
+                          labels=c("50", "500", "5000", "50,000", "500,000"), 
                           guide=guide_colorbar(title.position="top", 
                                                title.hjust=0.5,
                                                ticks.colour="black",
