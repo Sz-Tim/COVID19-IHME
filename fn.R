@@ -51,7 +51,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
   wkdays <- c("Su","M","T","W","R","F","Sa")
   ts.url <- paste0(jhu.repo, "csse_covid_19_data/csse_covid_19_time_series/")
   pop.gl <- read_csv("countryPops.csv") %>% mutate(pop_pK=Population/1e6)
-  pop.us <- read_csv("statePops.csv") %>% mutate(pop_pK=Population/1e4)
+  pop.us <- read_csv("statePops.csv") %>% mutate(pop_pK=Population/1e6)
   abbr.gl <- read_csv("countryCodes.csv", na=character())
   abbr.us <- read_csv("stateCodes.csv")
   
@@ -202,13 +202,26 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
            abbr=abbr.us$Code[match(State, abbr.us$State)])
   
+  
+  #--- Combined ----------------------------------------------------------------
+  obs.c <- rbind(obs.c.gl %>% rename(Region=Country), 
+                 obs.c.us %>% rename(Region=State) %>%  
+                   mutate(Region=paste("US:", Region),
+                          abbr=paste0("US:", abbr)))
+  obs.d <- rbind(obs.d.gl %>% rename(Region=Country), 
+                 obs.d.us %>% rename(Region=State) %>%  
+                   mutate(Region=paste("US:", Region),
+                          abbr=paste0("US:", abbr)))
+  
+  
   return(list(obs.d.gl=obs.d.gl, obs.d.gl.max=obs.d.gl.max, 
               obs.c.gl=obs.c.gl, obs.c.gl.max=obs.c.gl.max,
               gl.df=gl.df, mit.gl=mit.gl,
               obs.d.us=obs.d.us, obs.d.us.max=obs.d.us.max, 
               obs.c.us=obs.c.us, obs.c.us.max=obs.c.us.max, 
               us.df=us.df, mit.us=mit.us, 
-              test.us=test.us))
+              test.us=test.us,
+              obs.c=obs.c, obs.d=obs.d))
 }
 
 

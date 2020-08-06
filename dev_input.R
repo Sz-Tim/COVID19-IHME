@@ -1,35 +1,22 @@
-input <- list(f.country="US",
+input <- list(over.type="CFR",
+              over.span="Total",
+              over.dates=c("2020-03-01", end=Sys.Date()),
+              over.pK=T,
+              
+              f.country="US",
               f.modSource.gl=c("IHME", "MIT"),
               f.modDates.gl=c("2020_03_25", "2020_05_08",
                               "2020_04_16"),
               f.dates.gl=c("2020-03-01", "2020-07-01"),
               f.pK.gl=F,
               
-              comp.country=c("US", "Korea, South"),
-              comp.dates.gl=as.Date(c("2020-03-01", "2020-05-08")),
-              comp.pK.gl=TRUE,
+              comp.region=c("US", "Switzerland", "US: Missouri"),
+              comp.dates=as.Date(c("2020-03-01", "2020-08-08")),
+              comp.pK=TRUE,
               
               f.state="Colorado",
               f.modSource.us=c("IHME", "MIT"),
               f.modDates.us=c("2020_03_25", "2020_05_08",
                               "2020_04_16"),
               f.dates.us=c("2020-03-01", "2020-07-01"),
-              f.pK.us=F,
-              
-              # d.state="Colorado",
-              # d.modSource.us=c("IHME", "MIT"),
-              # d.modDates.us=c("2020_03_25", "2020_05_04",
-              #                 "2020_04_16"),
-              # d.dates.us=c("2020-03-01", "2020-07-01"),
-              # d.pK.us=F,
-              # 
-              # c.state="Colorado",
-              # c.modSource.us="MIT",
-              # c.modDates.us=c("2020_03_25", "2020_05_04",
-              #                 "2020_04_16"),
-              # c.dates.us=c("2020-03-01", "2020-07-01"),
-              # c.pK.us=F,
-              # 
-              comp.state=c("Colorado", "Illinois", "Georgia"),
-              comp.dates.us=c("2020-03-01", Sys.Date()),
-              comp.pK.us=TRUE)
+              f.pK.us=F)

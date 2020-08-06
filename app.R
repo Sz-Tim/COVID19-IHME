@@ -7,12 +7,72 @@ obs <- load_obs()
 refresh_peak_plots(obs)
 latest.mod.Ymd <- max(obs$gl.df$model_date)
 latest.mod.bd <- format(as.Date(latest.mod.Ymd, format="%Y_%m_%d"), "%b %d")
-
+pessimist.Ymd <- (obs$gl.df %>% filter(Country=="US") %>% 
+                      filter(Deaths==max(Deaths) & span=="Total"))$model_date
+pessimist.bd <- format(as.Date(pessimist.Ymd, format="%Y_%m_%d"), "%b %d")
 
 
 # Define UI for application
 ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
-                 
+        navbarMenu("Compare",
+            tabPanel("Counts",
+                tags$h4("Compare", tags$b("counts"), "among countries and US states"),
+                sidebarLayout(
+                    sidebarPanel(
+                        selectInput(inputId="comp.region", #"comp.state",
+                                    label="Choose countries and states to show",
+                                    choices=sort(unique(obs$obs.c$Region)), #sort(unique(obs$obs.c.us$State)),
+                                    selected=c("Italy", "Switzerland", "US",
+                                               "US: Colorado", "US: Maryland", 
+                                               "US: Missouri", "US: Tennessee"),
+                                    multiple=TRUE),
+                        dateRangeInput(inputId="comp.dates",
+                                       label="Choose dates to display",
+                                       start="2020-03-01", end=Sys.Date(),
+                                       min="2020-01-03", max=Sys.Date()),
+                        checkboxInput(inputId="comp.pK",
+                                      label="Display per million people",
+                                      value=TRUE),
+                        tags$hr(),
+                        "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the moving averages."
+                    ),
+                    mainPanel(plotOutput(outputId="region.comp", width="100%"))
+                )
+            ),
+            tabPanel("Fatality Rates",
+                tags$h4("Compare", tags$b("case fatality rates"), "across countries and US states"),
+                sidebarLayout(
+                    sidebarPanel(
+                        selectInput(inputId="cfr.region",
+                                    label="Choose countries and states to show",
+                                    choices=sort(unique(obs$obs.c$Region)),
+                                    selected=c("Italy", "Switzerland", "US",
+                                               "US: Colorado", "US: Maryland", 
+                                               "US: Missouri", "US: Tennessee"),
+                                    multiple=TRUE),
+                             dateRangeInput(inputId="cfr.dates",
+                                            label="Choose dates to display",
+                                            start="2020-03-01", end=Sys.Date(),
+                                            min="2020-01-03", max=Sys.Date()),
+                             tags$hr(),
+                             "The", tags$b("points"), "show the Case Fatality Rate (CFR = deaths/cases) with the", tags$b("lines"), "as the moving averages. While a lower CFR may be achieved through improvements in treatment, it is also influenced by several important factors that make the interpretation of differences across regions hazardous:", tags$br(), tags$br(),
+                        "1) More extensive testing decreases the CFR because less severe cases are included in the denominator. This is particularly important to consider when comparing regions with early outbreaks, when testing was severely limited, with regions with later  outbreaks.", tags$br(), tags$br(),
+                        "2) In the midst of an outbreak, the CFR will be artificially low, since cases are detected several weeks before the disease progresses to cause mortalities.",tags$br(), tags$br(),
+                        "3) A younger infected population will have a lower CFR."
+                         ),
+                         mainPanel(plotOutput(outputId="region.cfr", width="100%"))
+                     )
+            ),
+            tabPanel("Peaks",
+                     tags$h4("How long after the peak in", tags$b("new cases"), 
+                             "before the peak in", tags$b("deaths"), "?"),
+                     fluidRow(
+                         column(6, tags$img(src="country_comp_peak.png", width='95%')),
+                         column(6, tags$img(src="states_comp_peak.png", width='95%'))
+                     )
+            )
+        ),
+        
         navbarMenu("US States",
             tabPanel("Overview",
                 tags$h4("Overview of", tags$b("US States")),
@@ -30,13 +90,13 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                                 start="2020-03-01", end=Sys.Date(),
                                                 min="2020-01-03", max=Sys.Date()),
                                  checkboxInput(inputId="over.pK",
-                                               label="Display per 10k people",
+                                               label="Display per million people",
                                                value=TRUE),
                                  checkboxInput(inputId="over.free",
                                                label="Free y-axis?",
                                                value=FALSE),
                                  tags$hr(),
-                                 "The", tags$b("blue bars"), "show the average daily cases or deaths for each week. The", tags$b("brown curves"), "show the cumulative total cases or deaths. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period. By default, plots show the cases or deaths", tags$b("per 10,000 people."),
+                                 "The", tags$b("blue bars"), "show the average daily cases or deaths for each week. The", tags$b("brown curves"), "show the cumulative total cases or deaths. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period. By default, plots show the cases or deaths", tags$b("per million people."),
                                  width=3),
                     mainPanel(plotOutput(outputId="state.overview"),
                               width=9)
@@ -69,60 +129,19 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                        start="2020-03-01", end="2020-09-01",
                                        min="2020-01-03", max="2020-09-21"),
                         checkboxInput(inputId="f.pK.us",
-                                      label="Display per 10,000 people",
+                                      label="Display per million people",
                                       value=FALSE),
                         tags$hr(),
                         "The", tags$b("points"), "show reported cases or deaths, with the", tags$b("point color"), "indicating the day of the week (darkest = weekends), and the", tags$b("gray line"), "as the moving average. The", tags$b("model lines"), "show only the", tags$em("mean predictions,"), "starting from the date the model was released (i.e., the 'Apr 01' model starts on April 01). Currently, only the latest MIT model is available to compare. The", tags$b("vertical dotted lines"), "show the end of the worst 7-day period.",
                         tags$hr(),
                         "Mar 25: original release", tags$br(),
                         "Apr 16: most optimistic for US", tags$br(),
-                        "Jul 11: most pessimistic for US", tags$br(),
+                        paste0(pessimist.bd, ":"), "most pessimistic for US", tags$br(),
                         paste0(latest.mod.bd, ":"), "most recent"
                     ),
                     mainPanel(plotOutput(outputId="state.focus"))
                 )
             ),       
-            tabPanel("Compare",
-                     tags$h4("Compare multiple", tags$b("US States")),
-                     sidebarLayout(
-                         sidebarPanel(
-                             selectInput(inputId="comp.state",
-                                         label="Choose states to show",
-                                         choices=sort(unique(obs$obs.c.us$State)),
-                                         selected=c("Colorado", "Georgia", "Illinois"),
-                                         multiple=TRUE),
-                             dateRangeInput(inputId="comp.dates.us",
-                                            label="Choose dates to display",
-                                            start="2020-03-01", end=Sys.Date(),
-                                            min="2020-01-03", max=Sys.Date()),
-                             checkboxInput(inputId="comp.pK.us",
-                                           label="Display per 10k people",
-                                           value=TRUE),
-                             tags$hr(),
-                             "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the moving averages."
-                         ),
-                         mainPanel(plotOutput(outputId="state.comp", width="100%"))
-                     )
-            ),
-            tabPanel("Fatality Rates",
-                     tags$h4("Compare Case Fatality Rates in", tags$b("US States")),
-                     sidebarLayout(
-                         sidebarPanel(
-                             selectInput(inputId="cfr.state",
-                                         label="Choose states to show",
-                                         choices=sort(unique(obs$obs.c.us$State)),
-                                         selected=c("Colorado", "Georgia", "Illinois"),
-                                         multiple=TRUE),
-                             dateRangeInput(inputId="cfr.dates.us",
-                                            label="Choose dates to display",
-                                            start="2020-03-01", end=Sys.Date(),
-                                            min="2020-01-03", max=Sys.Date()),
-                             tags$hr(),
-                             "The", tags$b("points"), "show the Case Fatality Rate (CFR = deaths/cases) with the", tags$b("lines"), "as the moving averages."
-                         ),
-                         mainPanel(plotOutput(outputId="state.cfr", width="100%"))
-                     )
-            ),
             tabPanel("Testing Rates",
                      tags$h4("Testing trends in", tags$b("US States")),
                      sidebarLayout(
@@ -210,51 +229,10 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                              tags$hr(),
                              "Mar 25: original release", tags$br(),
                              "Apr 16: most optimistic for US", tags$br(),
-                             "Jul 11: most pessimistic for US", tags$br(),
+                             paste0(pessimist.bd, ":"), "most pessimistic for US", tags$br(),
                              paste0(latest.mod.bd, ":"), "most recent"
                          ),
                          mainPanel(plotOutput(outputId="country.focus"))
-                     )
-            ),
-            tabPanel("Compare",
-                     tags$h4("Compare multiple", tags$b("countries")),
-                     sidebarLayout(
-                         sidebarPanel(
-                             selectInput(inputId="comp.country",
-                                         label="Choose countries to show",
-                                         choices=sort(unique(obs$obs.c.gl$Country)),
-                                         selected=c("Switzerland", "Italy", "US"),
-                                         multiple=TRUE),
-                             dateRangeInput(inputId="comp.dates.gl",
-                                            label="Choose dates to display",
-                                            start="2020-03-01", end=Sys.Date(),
-                                            min="2020-01-03", max=Sys.Date()),
-                             checkboxInput(inputId="comp.pK.gl",
-                                           label="Display per million people",
-                                           value=TRUE),
-                             tags$hr(),
-                             "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the smoothed averages."
-                         ),
-                         mainPanel(plotOutput(outputId="country.comp", width="100%"))
-                     )
-            ),
-            tabPanel("Fatality Rate",
-                     tags$h4("Compare Case Fatality Rates across", tags$b("countries")),
-                     sidebarLayout(
-                         sidebarPanel(
-                             selectInput(inputId="cfr.country",
-                                         label="Choose countries to show",
-                                         choices=sort(unique(obs$obs.c.gl$Country)),
-                                         selected=c("Switzerland", "Italy", "US"),
-                                         multiple=TRUE),
-                             dateRangeInput(inputId="cfr.dates.gl",
-                                            label="Choose dates to display",
-                                            start="2020-03-01", end=Sys.Date(),
-                                            min="2020-01-03", max=Sys.Date()),
-                             tags$hr(),
-                             "The", tags$b("points"), "show the Case Fatality Rate (CFR = deaths/cases) with the", tags$b("lines"), "as the smoothed averages."
-                         ),
-                         mainPanel(plotOutput(outputId="country.cfr", width="100%"))
                      )
             )
         ),
@@ -271,13 +249,6 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                      fluidRow(
                          column(6, tags$img(src="country_c_peak.png", width='95%')),
                          column(6, tags$img(src="states_c_peak.png", width='95%'))
-                     )
-            ),
-            tabPanel("Compare",
-                     tags$h4("How long after the peak in", tags$b("new cases"), "before the peak in", tags$b("deaths"), "?"),
-                     fluidRow(
-                         column(6, tags$img(src="country_comp_peak.png", width='95%')),
-                         column(6, tags$img(src="states_comp_peak.png", width='95%'))
                      )
             )
         ),
@@ -384,18 +355,6 @@ server <- function(input, output) {
                                      levels=c(unique(paste(span, Type)))))
     })
     
-    obs.cfr.gl <- reactive({
-        full_join(obs$obs.c.gl %>% 
-                      filter(span=="Total" & Country %in% input$cfr.country), 
-                  obs$obs.d.gl %>% 
-                      filter(span=="Total" & Country %in% input$cfr.country) %>%
-                      select(Country, Date, Deaths.obs), 
-                  by=c("Country", "Date")) %>%
-            filter(Date >= input$cfr.dates.gl[1] & 
-                       Date <= input$cfr.dates.gl[2]) %>%
-            mutate(CFR=Deaths.obs/Cases.obs)
-    })
-    
     mit.f.gl <- reactive({
         bind_rows(
             obs$mit.gl %>% filter(Country==input$f.country &
@@ -456,24 +415,35 @@ server <- function(input, output) {
                lab.size=c(5,4,4))
     })
     
-    
     # Comparison
-    obs.comp.gl <- reactive({
+    obs.cfr <- reactive({
+        full_join(obs$obs.c %>% 
+                      filter(span=="Total" & Region %in% input$cfr.region), 
+                  obs$obs.d %>% 
+                      filter(span=="Total" & Region %in% input$cfr.region) %>%
+                      select(Region, Date, Deaths.obs), 
+                  by=c("Region", "Date")) %>%
+            filter(Date >= input$cfr.dates[1] & 
+                       Date <= input$cfr.dates[2]) %>%
+            mutate(CFR=Deaths.obs/Cases.obs)
+    })
+    
+    obs.comp <- reactive({
         bind_rows(
-            obs$obs.c.gl %>% ungroup %>%
-                filter(Country %in% input$comp.country & !is.na(Cases.obs) &
-                           Date >= input$comp.dates.gl[1] & 
-                           Date <= input$comp.dates.gl[2]) %>%
+            obs$obs.c %>% ungroup %>%
+                filter(Region %in% input$comp.region & !is.na(Cases.obs) &
+                           Date >= input$comp.dates[1] & 
+                           Date <= input$comp.dates[2]) %>%
                 mutate(Type="Cases",
-                       obs=ifelse(rep(input$comp.pK.gl, n()), 
+                       obs=ifelse(rep(input$comp.pK, n()), 
                                   Cases.obs/pop, Cases.obs)) %>%
                 select(-pop, -wDay, -Cases.obs),
-            obs$obs.d.gl %>% ungroup %>%
-                filter(Country %in% input$comp.country & !is.na(Deaths.obs) &
-                           Date >= input$comp.dates.gl[1] & 
-                           Date <= input$comp.dates.gl[2]) %>%
+            obs$obs.d %>% ungroup %>%
+                filter(Region %in% input$comp.region & !is.na(Deaths.obs) &
+                           Date >= input$comp.dates[1] & 
+                           Date <= input$comp.dates[2]) %>%
                 mutate(Type="Deaths",
-                       obs=ifelse(rep(input$comp.pK.gl, n()), 
+                       obs=ifelse(rep(input$comp.pK, n()), 
                                   Deaths.obs/pop, Deaths.obs)) %>%
                 select(-pop, -wDay, -Deaths.obs)
         ) %>% arrange(desc(span), Type) %>%
@@ -481,12 +451,12 @@ server <- function(input, output) {
                                    levels=c(unique(paste(span, Type))))) 
     })
     
-    obs.lab.comp.gl <- reactive({
-        tibble(SpanType=factor(levels(obs.comp.gl()$SpanType)[1], 
-                               levels=levels(obs.comp.gl()$SpanType)),
-               Date=input$comp.dates.gl[1], 
-               obs=max(obs.comp.gl()$obs),
-               lab=ifelse(input$comp.pK.gl, "per million", ""))
+    obs.lab.comp <- reactive({
+        tibble(SpanType=factor(levels(obs.comp()$SpanType)[1], 
+                               levels=levels(obs.comp()$SpanType)),
+               Date=input$comp.dates[1], 
+               obs=max(obs.comp()$obs),
+               lab=ifelse(input$comp.pK, "per million", ""))
     })
     
     
@@ -527,19 +497,6 @@ server <- function(input, output) {
                      SpanType=factor(paste(span, Type), 
                                      levels=c(unique(paste(span, Type)))))
     })
-    
-    obs.cfr.us <- reactive({
-        full_join(obs$obs.c.us %>% 
-                      filter(span=="Total" & State %in% input$cfr.state), 
-                  obs$obs.d.us %>% 
-                      filter(span=="Total" & State %in% input$cfr.state) %>%
-                      select(State, Date, Deaths.obs), 
-                  by=c("State", "Date")) %>%
-            filter(Date >= input$cfr.dates.us[1] & 
-                       Date <= input$cfr.dates.us[2]) %>%
-            mutate(CFR=Deaths.obs/Cases.obs)
-    })
-    
     
     # Focus 
     obs.f.us <- reactive({
@@ -627,7 +584,7 @@ server <- function(input, output) {
                            obs.f.us()$obs[obs.f.us()$SpanType=="Daily Deaths"]), 
                          na.rm=T)*1.15),
                lab=c(paste0(input$f.state, "\n", 
-                            c("", "(per 10k)")[input$f.pK.us+1]),
+                            c("", "(per million)")[input$f.pK.us+1]),
                      paste0("7-day peak:\n", 
                             format(obs.max.f.us()$Date[1],  "%b %d")),
                      paste0("7-day peak:\n", 
@@ -637,41 +594,67 @@ server <- function(input, output) {
     
     
     
-    # Comparison
-    obs.comp.us <- reactive({
-        bind_rows(
-            obs$obs.c.us %>% ungroup %>%
-                filter(State %in% input$comp.state & !is.na(Cases.obs) &
-                           Date >= input$comp.dates.us[1] & 
-                           Date <= input$comp.dates.us[2]) %>%
-                mutate(Type="Cases",
-                       obs=ifelse(rep(input$comp.pK.us, n()), 
-                                  Cases.obs/pop, Cases.obs)) %>%
-                select(-pop, -wDay, -Cases.obs),
-            obs$obs.d.us %>% ungroup %>%
-                filter(State %in% input$comp.state & !is.na(Deaths.obs) &
-                           Date >= input$comp.dates.us[1] & 
-                           Date <= input$comp.dates.us[2]) %>%
-                mutate(Type="Deaths",
-                       obs=ifelse(rep(input$comp.pK.us, n()), 
-                                  Deaths.obs/pop, Deaths.obs)) %>%
-                select(-pop, -wDay, -Deaths.obs)
-        ) %>% arrange(desc(span), Type) %>%
-            mutate(SpanType=factor(paste(span, Type), 
-                                   levels=c(unique(paste(span, Type)))))
+    
+    
+    ###---- Plots: Comparison --------------------------------------------------
+    output$region.comp <- renderPlot({
+        ggplot(obs.comp(), 
+               aes(Date, y=obs, colour=Region)) +
+            geom_text(data=obs.lab.comp(), aes(label=lab), colour=1,
+                      hjust=0, size=5) +
+            geom_hline(yintercept=0, colour="gray30", size=0.5) +
+            geom_line(data=filter(obs.comp(), span=="Daily"), 
+                      aes(group=Region), stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
+            geom_text(data=filter(obs.comp(), span=="Total" & Date==last(Date)), 
+                      aes(label=abbr), size=3, nudge_x=3, hjust=0, vjust=0.5) +
+            geom_text(data=filter(obs.comp(), span=="Daily" & Date>last(Date)-10) %>%
+                          group_by(Region, SpanType) %>%
+                          summarise(obs=mean(obs),
+                                    Date=last(Date),
+                                    abbr=first(abbr)),
+                      aes(label=abbr), size=3, nudge_x=3, hjust=0, vjust=0.5) +
+            geom_point(aes(alpha=span), size=1) + 
+            scale_alpha_manual(values=c(0.2,  0.8), guide=F) +
+            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
+            scale_y_continuous(labels=pretty_numbers, position="right",
+                               limits=c(0,NA)) + 
+            xlim(as.Date(input$comp.dates[1]),
+                 as.Date(input$comp.dates[2]+14)) +
+            facet_wrap(~SpanType, scales="free_y") +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=13),
+                  legend.text=element_text(size=14),
+                  legend.title=element_text(size=16), 
+                  title=element_text(size=18), 
+                  strip.text=element_text(size=16),
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="horizontal")
+    }, width=725, height=725)
+    
+    output$region.cfr <- renderPlot({
+        ggplot(obs.cfr(), aes(Date, y=CFR, colour=Region)) +
+            geom_hline(yintercept=0, colour="gray30", size=0.5) +
+            geom_line(aes(group=Region), stat="smooth", method="loess", 
+                      span=0.6, formula=y~x, size=1) +
+            geom_text(data=filter(obs.cfr(), Date==last(Date)), 
+                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
+            geom_point(alpha=0.2, size=1) + 
+            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
+            scale_y_continuous(labels=scales::percent_format(accuracy=1), 
+                               position="right", limits=c(0,NA)) + 
+            xlim(as.Date(input$cfr.dates[1]),
+                 as.Date(input$cfr.dates[2]+4)) +
+            labs(x="", y="") + 
+            theme(axis.text=element_text(size=13),
+                  legend.text=element_text(size=14),
+                  legend.title=element_text(size=16), 
+                  title=element_text(size=18), 
+                  legend.box.margin=margin(-10,0,0,0),
+                  legend.position="bottom",
+                  legend.direction="horizontal")
     })
-    
-    obs.lab.comp.us <- reactive({
-        tibble(SpanType=factor(levels(obs.comp.us()$SpanType)[1], 
-                               levels=levels(obs.comp.us()$SpanType)),
-               Date=input$comp.dates.us[1], 
-               obs=max(obs.comp.us()$obs),
-               lab=ifelse(input$comp.pK.us, "per 10k", ""))
-    })
-    
-    
-    
-    
     
     
     ###---- Plots: US States ---------------------------------------------------
@@ -767,57 +750,6 @@ server <- function(input, output) {
                   legend.position="bottom",
                   legend.direction="vertical")
     }, width=700, height=725)
-    
-    output$state.comp <- renderPlot({
-        ggplot(obs.comp.us(), 
-               aes(Date, y=obs, colour=State)) +
-            geom_text(data=obs.lab.comp.us(), aes(label=lab), colour=1,
-                      hjust=0, size=5) +
-            geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_line(aes(group=State), stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
-            geom_text(data=filter(obs.comp.us(), Date==last(Date)), 
-                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
-            geom_point(alpha=0.5, size=1) + 
-            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
-            scale_y_continuous(labels=pretty_numbers, position="right",
-                               limits=c(0,NA)) + 
-            xlim(as.Date(input$comp.dates.us[1]),
-                 as.Date(input$comp.dates.us[2]+4)) +
-            facet_wrap(~SpanType, scales="free_y") +
-            labs(x="", y="") + 
-            theme(axis.text=element_text(size=13),
-                  legend.text=element_text(size=14),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18), 
-                  strip.text=element_text(size=16),
-                  legend.box.margin=margin(-10,0,0,0),
-                  legend.position="bottom",
-                  legend.direction="horizontal")
-    }, width=700, height=725)
-    
-    output$state.cfr <- renderPlot({
-        ggplot(obs.cfr.us(), aes(Date, y=CFR, colour=State)) +
-            geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_line(aes(group=State), stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
-            geom_text(data=filter(obs.cfr.us(), Date==last(Date)), 
-                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
-            geom_point(alpha=0.5, size=1) + 
-            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
-            scale_y_continuous(labels=scales::percent_format(accuracy=1), 
-                               position="right", limits=c(0,NA)) + 
-            xlim(as.Date(input$cfr.dates.us[1]),
-                 as.Date(input$cfr.dates.us[2]+4)) +
-            labs(x="", y="") + 
-            theme(axis.text=element_text(size=13),
-                  legend.text=element_text(size=14),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18), 
-                  legend.box.margin=margin(-10,0,0,0),
-                  legend.position="bottom",
-                  legend.direction="horizontal")
-    })
     
     output$state.testing <- renderPlot({
         ggplot(obs.us.test(), aes(x=Date)) +
@@ -953,57 +885,6 @@ server <- function(input, output) {
                   legend.position="bottom",
                   legend.direction="vertical")
     }, width=700, height=725)
-    
-    output$country.comp <- renderPlot({
-        ggplot(obs.comp.gl(), 
-               aes(Date, y=obs, colour=Country)) +
-            geom_text(data=obs.lab.comp.gl(), aes(label=lab), colour=1,
-                      hjust=0, size=5) +
-            geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_line(aes(group=Country), stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
-            geom_text(data=filter(obs.comp.gl(), Date==last(Date)), 
-                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
-            geom_point(alpha=0.5, size=1) + 
-            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
-            scale_y_continuous(labels=pretty_numbers, position="right",
-                               limits=c(0,NA)) + 
-            xlim(as.Date(input$comp.dates.gl[1]),
-                 as.Date(input$comp.dates.gl[2])+4) +
-            facet_wrap(~SpanType, scales="free_y") +
-            labs(x="", y="") + 
-            theme(axis.text=element_text(size=13),
-                  legend.text=element_text(size=14),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18), 
-                  strip.text=element_text(size=16),
-                  legend.box.margin=margin(-10,0,0,0),
-                  legend.position="bottom",
-                  legend.direction="horizontal")
-    }, width=700, height=725)
-    
-    output$country.cfr <- renderPlot({
-        ggplot(obs.cfr.gl(), aes(Date, y=CFR, colour=Country)) +
-            geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_line(aes(group=Country), stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
-            geom_text(data=filter(obs.cfr.gl(), Date==last(Date)), 
-                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
-            geom_point(alpha=0.5, size=1) + 
-            scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
-            scale_y_continuous(labels=scales::percent_format(accuracy=1), 
-                               position="right", limits=c(0,NA)) + 
-            xlim(as.Date(input$cfr.dates.gl[1]),
-                 as.Date(input$cfr.dates.gl[2]+4)) +
-            labs(x="", y="") + 
-            theme(axis.text=element_text(size=13),
-                  legend.text=element_text(size=14),
-                  legend.title=element_text(size=16), 
-                  title=element_text(size=18), 
-                  legend.box.margin=margin(-10,0,0,0),
-                  legend.position="bottom",
-                  legend.direction="horizontal")
-    })
 }
 
 # Run the application 
