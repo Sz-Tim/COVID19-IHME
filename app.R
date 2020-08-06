@@ -19,9 +19,9 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                 tags$h4("Compare", tags$b("counts"), "among countries and US states"),
                 sidebarLayout(
                     sidebarPanel(
-                        selectInput(inputId="comp.region", #"comp.state",
+                        selectInput(inputId="comp.region", 
                                     label="Choose countries and states to show",
-                                    choices=sort(unique(obs$obs.c$Region)), #sort(unique(obs$obs.c.us$State)),
+                                    choices=sort(unique(obs$obs.c$Region)), 
                                     selected=c("Italy", "Switzerland", "US",
                                                "US: Colorado", "US: Maryland", 
                                                "US: Missouri", "US: Tennessee"),
@@ -34,6 +34,11 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                       label="Display per million people",
                                       value=TRUE),
                         tags$hr(),
+                        tags$img(src="attention.png", height='15px'),
+                        tags$b("Testing has changed over time."),
+                        tags$br(), tags$br(),
+                        "Current levels of testing are comparable among developed countries. However, mortality is more reliable for comparisons involving earlier dates (e.g., March) because testing was biased toward severe cases.",
+                        tags$br(), tags$br(),
                         "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the moving averages."
                     ),
                     mainPanel(plotOutput(outputId="region.comp", width="100%"))
