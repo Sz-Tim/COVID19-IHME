@@ -40,7 +40,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                 )
             ),
             tabPanel("Fatality Rates",
-                tags$h4("Compare", tags$b("case fatality rates"), "across countries and US states"),
+                tags$h4("Compare", tags$b("Case Fatality Rates"), "across countries and US states"),
                 sidebarLayout(
                     sidebarPanel(
                         selectInput(inputId="cfr.region",
@@ -54,13 +54,20 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                             label="Choose dates to display",
                                             start="2020-03-01", end=Sys.Date(),
                                             min="2020-01-03", max=Sys.Date()),
-                             tags$hr(),
-                             "The", tags$b("points"), "show the Case Fatality Rate (CFR = deaths/cases) with the", tags$b("lines"), "as the moving averages. While a lower CFR may be achieved through improvements in treatment, it is also influenced by several important factors that make the interpretation of differences across regions hazardous:", tags$br(), tags$br(),
-                        "1) More extensive testing decreases the CFR because less severe cases are included in the denominator. This is particularly important to consider when comparing regions with early outbreaks, when testing was severely limited, with regions with later  outbreaks.", tags$br(), tags$br(),
-                        "2) In the midst of an outbreak, the CFR will be artificially low, since cases are detected several weeks before the disease progresses to cause mortalities.",tags$br(), tags$br(),
-                        "3) A younger infected population will have a lower CFR."
-                         ),
-                         mainPanel(plotOutput(outputId="region.cfr", width="100%"))
+                        tags$hr(),
+                        tags$img(src="attention.png", height='15px'),
+                        tags$b("The Case Fatality Rate (CFR) is sensitive to testing intensity and the stage of an outbreak - direct comparisons are dangerous!"),
+                        tags$br(), tags$br(),
+                        "Testing intensity has increased dramatically since February, so regions with early outbreaks should not be compared to regions with later or ongoing outbreaks.",
+                        tags$br(), tags$br(),
+                        "In February and March, testing was limited. CFRs were therefore high, since only more severe cases were detected. In current outbreaks, testing is more available, so a larger proportion of cases are included in the denominator, leading to a lower CFR.",
+                        tags$br(), tags$br(),
+                        "With adequate testing, the CFR will decrease at the start of an outbreak, and increase as the outbreak progresses. This is because of the delay in when a case is detected and when it results in a mortality, which takes several weeks.",
+                        tags$br(), tags$br(),
+                        "Finally, the deadliness of COVID-19 within a region will change with the age distribution of infected individuals, and is not entirely due to differences in medical treatment.",
+                         width=5),
+                         mainPanel(plotOutput(outputId="region.cfr", width="100%"),
+                                   width=7)
                      )
             ),
             tabPanel("Peaks",
@@ -636,11 +643,9 @@ server <- function(input, output) {
     output$region.cfr <- renderPlot({
         ggplot(obs.cfr(), aes(Date, y=CFR, colour=Region)) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_line(aes(group=Region), stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
             geom_text(data=filter(obs.cfr(), Date==last(Date)), 
-                      aes(label=abbr), size=4, nudge_x=2, hjust=0, vjust=0.5) +
-            geom_point(alpha=0.2, size=1) + 
+                      aes(label=abbr), size=3, nudge_x=2, hjust=0, vjust=0.5) +
+            geom_point(alpha=0.9, size=1) + 
             scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
             scale_y_continuous(labels=scales::percent_format(accuracy=1), 
                                position="right", limits=c(0,NA)) + 
