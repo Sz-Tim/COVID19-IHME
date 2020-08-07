@@ -463,6 +463,16 @@ server <- function(input, output) {
                                    levels=c(unique(paste(span, Type))))) 
     })
     
+    obs.comp.loess <- reactive({
+        obs.comp() %>% filter(span=="Daily") %>% 
+            group_by(Region, SpanType) %>%
+            nest() %>%
+            mutate(loess=map(data, 
+                             ~loess(obs ~ as.numeric(Date), data=.x, span=0.6)), 
+                   fitted=map(loess, `[[`, "fitted")) %>%
+            unnest(cols=c(data, fitted))
+    })
+    
     obs.lab.comp <- reactive({
         tibble(SpanType=factor(levels(obs.comp()$SpanType)[1], 
                                levels=levels(obs.comp()$SpanType)),
@@ -615,17 +625,12 @@ server <- function(input, output) {
             geom_text(data=obs.lab.comp(), aes(label=lab), colour=1,
                       hjust=0, size=5) +
             geom_hline(yintercept=0, colour="gray30", size=0.5) +
-            geom_line(data=filter(obs.comp(), span=="Daily"), 
-                      aes(group=Region), stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1) +
             geom_text(data=filter(obs.comp(), span=="Total" & Date==last(Date)), 
                       aes(label=abbr), size=3, nudge_x=3, hjust=0, vjust=0.5) +
-            geom_text(data=filter(obs.comp(), span=="Daily" & Date>last(Date)-10) %>%
-                          group_by(Region, SpanType) %>%
-                          summarise(obs=mean(obs),
-                                    Date=last(Date),
-                                    abbr=first(abbr)),
-                      aes(label=abbr), size=3, nudge_x=3, hjust=0, vjust=0.5) +
+            geom_line(data=obs.comp.loess(), aes(y=fitted), size=1) +
+            geom_text(data=filter(obs.comp.loess(), Date==last(Date)), 
+                      aes(y=fitted, label=abbr), 
+                      size=3, nudge_x=3, hjust=0, vjust=0.5) +
             geom_point(aes(alpha=span), size=1) + 
             scale_alpha_manual(values=c(0.2,  0.8), guide=F) +
             scale_colour_viridis_d("", end=0.8, option="plasma", direction=-1) +
