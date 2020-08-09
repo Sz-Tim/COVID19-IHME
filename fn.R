@@ -195,6 +195,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
                        filter(State %in% unique(obs.d.us$State)), 
                      filter(obs.d.us, State %in% unique(ihme.df$Country)), 
                      by=c("State", "Date", "span")) %>% group_by(State) %>%
+    filter(!is.na(model_date)) %>%
     mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
            abbr=abbr.us$Code[match(State, abbr.us$State)])
   mit.us <- mit.df %>% filter(Country=="US" & Province !="None") %>% 
