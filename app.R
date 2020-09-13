@@ -201,7 +201,7 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                                                     label="Free y-axis?",
                                                     value=TRUE),
                                       tags$hr(),
-                                      "The", tags$b("blue bars"), "show the average daily cases or deaths for each week. The", tags$b("brown curves"), "show the cumulative total cases or deaths. Note that only the 25% hardest hit countries are shown, as measured by total cases. By default, plots show the cases or deaths", tags$b("per million people."),
+                                      "The", tags$b("blue bars"), "show the average daily cases or deaths for each week. The", tags$b("brown curves"), "show the cumulative total cases or deaths. Note that only the 64 hardest hit countries are shown, as measured by total cases. By default, plots show the cases or deaths", tags$b("per million people."),
                                              width=3),
                                 mainPanel(plotOutput(outputId="country.overview"),
                                           width=9)
@@ -321,12 +321,12 @@ server <- function(input, output) {
                    SpanType=factor(paste(span, Type), 
                                    levels=c(unique(paste(span, Type)))),
                    week=lubridate::floor_date(Date, unit="week")) %>%
-            group_by(Country) %>% mutate(maxCases=max(obs, na.rm=T)) %>%
-            ungroup() %>% 
-            filter(maxCases > quantile(unique(maxCases), 0.75)) %>%
             filter(!is.na(pop)) %>% 
             group_by(Country, abbr, week, span, Type, SpanType) %>%
-            summarise(obs=mean(obs, na.rm=T), pop=first(pop))
+            summarise(obs=mean(obs, na.rm=T), pop=first(pop)) %>%
+            group_by(Country) %>% mutate(maxCases=max(obs, na.rm=T)) %>%
+            ungroup() %>% 
+            filter(maxCases >= sort(unique(maxCases), decreasing=T)[64])
     })
     
     # Focus 
@@ -705,7 +705,7 @@ server <- function(input, output) {
             theme(axis.text=element_text(size=7.5, angle=330, hjust=0, vjust=0),
                   strip.text=element_text(size=9),
                   legend.position=c(0.75, 0.065))
-    }, width=850, height=750)
+    }, width=900, height=750)
     
     output$state.focus <- renderPlot({
         ggplot(obs.f.us(), aes(Date, obs)) +
@@ -838,7 +838,7 @@ server <- function(input, output) {
             theme(axis.text=element_text(size=7.5, angle=330, hjust=0, vjust=0),
                   strip.text=element_text(size=9),
                   legend.position=c(0.75, 0.065))
-    }, width=850, height=750)
+    }, width=900, height=750)
     
     output$country.focus <- renderPlot({
         ggplot(obs.f.gl(), aes(Date, obs)) +
