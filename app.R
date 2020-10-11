@@ -468,7 +468,7 @@ server <- function(input, output) {
             group_by(Region, SpanType) %>%
             nest() %>%
             mutate(loess=map(data, 
-                             ~loess(obs ~ as.numeric(Date), data=.x, span=0.6)), 
+                             ~loess(obs ~ as.numeric(Date), data=.x, span=0.5)), 
                    fitted=map(loess, `[[`, "fitted")) %>%
             unnest(cols=c(data, fitted))
     })
@@ -723,9 +723,11 @@ server <- function(input, output) {
                 geom_line(data=ihme.f.us(), size=1,
                           aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_line(data=filter(obs.f.us(), span=="Daily"), aes(alpha=src),
-                      stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1.5) +
+            # geom_line(data=filter(obs.f.us(), span=="Daily"), aes(alpha=src),
+            #           stat="smooth", method="loess", 
+            #           span=0.6, formula=y~x, size=1.5) +
+            tidyquant::geom_ma(data=filter(obs.f.us(), span=="Daily"),
+                               aes(alpha=src), n=14, colour=1, size=1.5, linetype=1) +
             geom_vline(data=obs.max.f.us(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.f.us(), aes(label=lab), 
                       fontface=c("italic", "plain", "plain"), nudge_x=c(0,2,2),
@@ -856,11 +858,11 @@ server <- function(input, output) {
                 geom_line(data=ihme.f.gl(), size=1,
                           aes(y=pred, group=model_date, colour=model_date))
             }} +
-            geom_line(data=filter(obs.f.gl(), span=="Daily"), aes(alpha=src),
-                      stat="smooth", method="loess", 
-                      span=0.6, formula=y~x, size=1.5) +
-            # geom_ma(data=filter(obs.f.gl(), span=="Daily"),
-            #         aes(alpha=src), n=7, colour=1, size=1.5, linetype=1) + 
+            # geom_line(data=filter(obs.f.gl(), span=="Daily"), aes(alpha=src),
+            #           stat="smooth", method="loess",
+            #           span=0.5, formula=y~x, size=1.5) +
+            tidyquant::geom_ma(data=filter(obs.f.gl(), span=="Daily"),
+                    aes(alpha=src), n=14, colour=1, size=1.5, linetype=1) +
             geom_vline(data=obs.max.f.gl(), aes(xintercept=Date), linetype=3) +
             geom_text(data=obs.lab.f.gl(), aes(label=lab), 
                       fontface=c("italic", "plain", "plain"), nudge_x=c(0,2,2),
