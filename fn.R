@@ -241,9 +241,9 @@ refresh_peak_plots <- function(obs) {
     geom_linerange(size=5) + coord_flip() + 
     scale_colour_gradient("Total new deaths in 7-day period",  
                           low="#fff5f0" , high="red",
-                          trans="log", limits=c(1, 20000),
-                          breaks=c(2, 20, 200, 2e3, 2e4),
-                          labels=c("2", "20", "200", "2,000", "20,000"), 
+                          trans="log", limits=c(1, 50000),
+                          breaks=c(5, 50, 500, 5e3, 5e4),
+                          labels=c("5", "50", "500", "5,000", "50,000"), 
                           guide=guide_colorbar(title.position="top", 
                                                title.hjust=0.5,
                                                ticks.colour="black",
@@ -276,9 +276,9 @@ refresh_peak_plots <- function(obs) {
     geom_linerange(size=4) + coord_flip() + 
     scale_colour_gradient("Total new cases in 7-day period",  
                           low="#fff5f0" , high="red",
-                          trans="log", limits=c(1, 500000),
-                          breaks=c(50, 500, 5e3, 5e4, 5e5),
-                          labels=c("50", "500", "5000", "50,000", "500,000"), 
+                          trans="log", limits=c(1, 1e6),
+                          breaks=c(1e2, 1e3, 1e4, 1e5, 1e6),
+                          labels=c("100", "1,000", "10,000", "100,000", "1,000,000"), 
                           guide=guide_colorbar(title.position="top", 
                                                title.hjust=0.5,
                                                ticks.colour="black",
@@ -295,7 +295,7 @@ refresh_peak_plots <- function(obs) {
           legend.box.margin=margin(-10,0,0,0),
           legend.key.width=unit(20, "mm"),
           legend.key.height=unit(2, "mm"),
-          axis.text=element_text(size=12),
+          axis.text=element_text(size=10),
           legend.text=element_text(size=14),
           axis.title=element_text(size=16),
           legend.title=element_text(size=16), 
@@ -325,7 +325,7 @@ refresh_peak_plots <- function(obs) {
              label=paste("  Average delay\n ", 
                          round(mn.daysG0.gl, 1), "days"), colour="darkblue") +
     scale_fill_manual(values=c("gray", "darkblue"),  guide=F) +
-    theme(axis.text=element_text(size=14),
+    theme(axis.text=element_text(size=12),
           axis.title=element_text(size=16),
           title=element_text(size=18)) +
     labs(x="Days between case peak and death peak", 
@@ -348,17 +348,17 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.d.us$Date),
                             min(obs$obs.d.us.max$Date), 
-                            by=-14), minor_breaks=NULL, 
+                            by=-28), minor_breaks=NULL, 
                  labels=as.Date(seq(max(obs$obs.d.us$Date),
                                     min(obs$obs.d.us.max$Date), 
-                                    by=-14), format="%Y_%m_%d") %>%
+                                    by=-28), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
           legend.box.margin=margin(-10,0,0,0),
           legend.key.width=unit(20, "mm"),
           legend.key.height=unit(2, "mm"),
-          axis.text=element_text(size=14),
+          axis.text=element_text(size=12),
           legend.text=element_text(size=14),
           axis.title=element_text(size=16),
           legend.title=element_text(size=16), 
@@ -383,17 +383,17 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.c.us$Date),
                             min(obs$obs.c.us.max$Date), 
-                            by=-14), minor_breaks=NULL, 
+                            by=-28), minor_breaks=NULL, 
                  labels=as.Date(seq(max(obs$obs.c.us$Date),
                                     min(obs$obs.c.us.max$Date), 
-                                    by=-14), format="%Y_%m_%d") %>%
+                                    by=-28), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
           legend.box.margin=margin(-10,0,0,0),
           legend.key.width=unit(20, "mm"),
           legend.key.height=unit(2, "mm"),
-          axis.text=element_text(size=14),
+          axis.text=element_text(size=12),
           legend.text=element_text(size=14),
           axis.title=element_text(size=16),
           legend.title=element_text(size=16), 
@@ -423,7 +423,7 @@ refresh_peak_plots <- function(obs) {
              label=paste("  Average delay:\n ", 
                          round(mn.daysG0.us, 1), "days"), colour="darkblue") +
     scale_fill_manual(values=c("gray", "darkblue"),  guide=F) +
-    theme(axis.text=element_text(size=14),
+    theme(axis.text=element_text(size=12),
           axis.title=element_text(size=16),
           title=element_text(size=18)) +
     labs(x="Days between case peak and death peak", 
