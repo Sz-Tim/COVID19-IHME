@@ -10,6 +10,16 @@ latest.mod.bd <- format(as.Date(latest.mod.Ymd, format="%Y_%m_%d"), "%b %d")
 pessimist.Ymd <- (obs$gl.df %>% filter(Country=="US") %>% 
                       filter(Deaths==max(Deaths) & span=="Total"))$model_date
 pessimist.bd <- format(as.Date(pessimist.Ymd, format="%Y_%m_%d"), "%b %d")
+comp.defaults <- obs$obs.c %>% 
+    filter(Date > (max(Date)-7) & 
+               span=="Daily" &
+               Continent %in% c("Europe", "Americas") &
+               pop > 0.25) %>%
+    group_by(Continent, Region) %>%
+    summarise(mn=mean(Cases.obs/pop)) %>% 
+    group_by(Continent) %>% arrange(Continent, mn) %>%
+    slice(c(trunc(n()/2), n(), n()-1))
+
 
 
 # Define UI for application
@@ -22,9 +32,8 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                         selectInput(inputId="comp.region", 
                                     label="Choose countries and states to show",
                                     choices=sort(unique(obs$obs.c$Region)), 
-                                    selected=c("Italy", "Switzerland", "US",
-                                               "US: Colorado", "US: Maryland", 
-                                               "US: Missouri", "US: Tennessee"),
+                                    selected=c(comp.defaults$Region, 
+                                               "Switzerland"),
                                     multiple=TRUE),
                         dateRangeInput(inputId="comp.dates",
                                        label="Choose dates to display",
@@ -39,7 +48,9 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                         tags$br(), tags$br(),
                         "Current levels of testing are comparable among developed countries. However, mortality is more reliable for comparisons involving earlier dates (e.g., March) because testing was biased toward severe cases.",
                         tags$br(), tags$br(),
-                        "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the moving averages."
+                        "The", tags$b("points"), "show reported cases or deaths with the", tags$b("lines"), "as the moving averages.",
+                        tags$br(), tags$br(),
+                        "By default, the median and two worst regions by cases per capita in the past 7 days are shown (with US states treated separately) for the Americas and Europe."
                     ),
                     mainPanel(plotOutput(outputId="region.comp", width="100%"))
                 )
@@ -51,9 +62,8 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                         selectInput(inputId="cfr.region",
                                     label="Choose countries and states to show",
                                     choices=sort(unique(obs$obs.c$Region)),
-                                    selected=c("Italy", "Switzerland", "US",
-                                               "US: Colorado", "US: Maryland", 
-                                               "US: Missouri", "US: Tennessee"),
+                                    selected=c(comp.defaults$Region, 
+                                               "Switzerland"),
                                     multiple=TRUE),
                              dateRangeInput(inputId="cfr.dates",
                                             label="Choose dates to display",
@@ -70,6 +80,8 @@ ui <- navbarPage("COVID-19 Data Trends", theme=shinythemes::shinytheme("yeti"),
                         "With adequate testing, the CFR will decrease at the start of an outbreak, and increase as the outbreak progresses. This is because of the delay in when a case is detected and when it results in a mortality, which takes several weeks.",
                         tags$br(), tags$br(),
                         "Finally, the deadliness of COVID-19 within a region will change with the age distribution of infected individuals, and is not entirely due to differences in medical treatment.",
+                        tags$br(), tags$br(),
+                        "By default, the median and two worst regions by cases per capita in the past 7 days are shown (with US states treated separately) for the Americas and Europe.",
                          width=5),
                          mainPanel(plotOutput(outputId="region.cfr", width="100%"),
                                    width=7)

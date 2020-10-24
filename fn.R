@@ -99,6 +99,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Deaths.obs") %>%
     mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           Continent=pop.gl$Continent[match(Country, pop.gl$Country)],
            abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   obs.d.gl.max <- obs.d.gl %>% filter(Country != "Diamond Princess") %>%
     group_by(Country) %>% 
@@ -120,6 +121,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Cases.obs") %>%
     mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           Continent=pop.gl$Continent[match(Country, pop.gl$Country)],
            abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   obs.c.gl.max <- obs.c.gl %>% filter(Country != "Diamond Princess") %>%
     group_by(Country) %>% 
@@ -138,11 +140,13 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
     mutate(modelDate=as.Date(model_date, format="%Y_%m_%d") %>%
              format("%b %d")) %>%
     mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           Continent=pop.gl$Continent[match(Country, pop.gl$Country)],
            abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   mit.gl <- mit.df %>% filter(Province=="None") %>%
     group_by(Country, Date, span) %>% 
     summarise(Cases=sum(Cases), Deaths=sum(Deaths)) %>%
     mutate(pop=pop.gl$pop_pK[match(Country, pop.gl$Country)],
+           Continent=pop.gl$Continent[match(Country, pop.gl$Country)],
            abbr=abbr.gl$Code[match(Country, abbr.gl$Country)])
   
   
@@ -158,6 +162,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Deaths.obs") %>%
     mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           Continent="Americas",
            abbr=abbr.us$Code[match(State, abbr.us$State)])
   obs.d.us.max <- obs.d.us %>% 
     filter(State %in% c(state.name, "Puerto Rico", "District of Columbia")) %>% 
@@ -180,6 +185,7 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            wDay=factor(wkdays[lubridate::wday(Date)], levels=wkdays)) %>%
     pivot_longer(3:4, names_to="span", values_to="Cases.obs") %>%
     mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           Continent="Americas",
            abbr=abbr.us$Code[match(State, abbr.us$State)])
   obs.c.us.max <- obs.c.us %>% 
     filter(State %in% c(state.name, "Puerto Rico", "District of Columbia")) %>% 
@@ -197,10 +203,12 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
                      by=c("State", "Date", "span")) %>% group_by(State) %>%
     filter(!is.na(model_date)) %>%
     mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           Continent="Americas",
            abbr=abbr.us$Code[match(State, abbr.us$State)])
   mit.us <- mit.df %>% filter(Country=="US" & Province !="None") %>% 
     rename(State=Province) %>%
     mutate(pop=pop.us$pop_pK[match(State, pop.us$State)],
+           Continent="Americas",
            abbr=abbr.us$Code[match(State, abbr.us$State)])
   
   
