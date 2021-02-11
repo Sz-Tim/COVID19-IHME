@@ -258,10 +258,10 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.d.gl$Date),
                             min(obs$obs.d.gl.max$Date), 
-                            by=-28), minor_breaks=NULL,
+                            by=-56), minor_breaks=NULL,
                  labels=as.Date(seq(max(obs$obs.d.gl$Date),
                                     min(obs$obs.d.gl.max$Date), 
-                                    by=-28), format="%Y_%m_%d") %>%
+                                    by=-56), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
@@ -284,19 +284,19 @@ refresh_peak_plots <- function(obs) {
     geom_linerange(size=4) + coord_flip() + 
     scale_colour_gradient("Total new cases in 7-day period",  
                           low="#fff5f0" , high="red",
-                          trans="log", limits=c(1, 1e6),
-                          breaks=c(1e2, 1e3, 1e4, 1e5, 1e6),
-                          labels=c("100", "1,000", "10,000", "100,000", "1,000,000"), 
+                          trans="log", limits=c(1, 2e6),
+                          breaks=c(2e2, 2e4, 2e6),
+                          labels=c("200", "20,000", "2,000,000"), 
                           guide=guide_colorbar(title.position="top", 
                                                title.hjust=0.5,
                                                ticks.colour="black",
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.c.gl$Date),
                             min(obs$obs.c.gl.max$Date), 
-                            by=-28), minor_breaks=NULL,
+                            by=-56), minor_breaks=NULL,
                  labels=as.Date(seq(max(obs$obs.c.gl$Date),
                                     min(obs$obs.c.gl.max$Date), 
-                                    by=-28), format="%Y_%m_%d") %>%
+                                    by=-56), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
@@ -356,10 +356,10 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.d.us$Date),
                             min(obs$obs.d.us.max$Date), 
-                            by=-28), minor_breaks=NULL, 
+                            by=-56), minor_breaks=NULL, 
                  labels=as.Date(seq(max(obs$obs.d.us$Date),
                                     min(obs$obs.d.us.max$Date), 
-                                    by=-28), format="%Y_%m_%d") %>%
+                                    by=-56), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
@@ -391,10 +391,10 @@ refresh_peak_plots <- function(obs) {
                                                ticks=T)) +
     scale_y_date(breaks=seq(max(obs$obs.c.us$Date),
                             min(obs$obs.c.us.max$Date), 
-                            by=-28), minor_breaks=NULL, 
+                            by=-56), minor_breaks=NULL, 
                  labels=as.Date(seq(max(obs$obs.c.us$Date),
                                     min(obs$obs.c.us.max$Date), 
-                                    by=-28), format="%Y_%m_%d") %>%
+                                    by=-56), format="%Y_%m_%d") %>%
                    format("%b %d")) +
     scale_x_discrete(position="top") +
     theme(legend.position="bottom", 
