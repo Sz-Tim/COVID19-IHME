@@ -88,10 +88,10 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
   
   
   #--- Countries ---------------------------------------------------------------
-  obs.d.gl <- read.csv(paste0(ts.url, "time_series_covid19_deaths_global.csv")) %>%
-    pivot_longer(13:ncol(.), names_to="Date", values_to="deaths") %>%
-    mutate(Date=lubridate::mdy(str_sub(Date, 2, -1L)),
-           Country=Country.Region) %>%
+  obs.d.gl <- read_csv(paste0(ts.url, "time_series_covid19_deaths_global.csv")) %>%
+    pivot_longer(5:ncol(.), names_to="Date", values_to="deaths") %>%
+    mutate(Date=lubridate::mdy(Date),
+           Country=`Country/Region`) %>%
     group_by(Country, Date) %>% summarise(Total=sum(deaths)) %>%
     group_by(Country) %>% arrange(Country, Date) %>%
     mutate(Daily=Total-lag(Total)) %>% ungroup %>%
@@ -110,10 +110,10 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            mn_7d=(Deaths.obs+obs.l1+obs.l2+obs.l3+obs.l4+obs.l5+obs.l6)/7) %>%
     filter(!is.na(mn_7d)) %>% arrange(Country, mn_7d) %>% group_by(Country) %>% 
     summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop), abbr=first(abbr))
-  obs.c.gl <- read.csv(paste0(ts.url, "time_series_covid19_confirmed_global.csv")) %>%
-    pivot_longer(13:ncol(.), names_to="Date", values_to="deaths") %>%
-    mutate(Date=lubridate::mdy(str_sub(Date, 2, -1L)),
-           Country=Country.Region) %>%
+  obs.c.gl <- read_csv(paste0(ts.url, "time_series_covid19_confirmed_global.csv")) %>%
+    pivot_longer(5:ncol(.), names_to="Date", values_to="deaths") %>%
+    mutate(Date=lubridate::mdy(Date),
+           Country=`Country/Region`) %>%
     group_by(Country, Date) %>% summarise(Total=sum(deaths)) %>%
     group_by(Country) %>% arrange(Country, Date) %>%
     mutate(Daily=Total-lag(Total)) %>% ungroup %>%
@@ -151,9 +151,9 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
   
   
   #--- US States ---------------------------------------------------------------
-  obs.d.us <- read.csv(paste0(ts.url, "time_series_covid19_deaths_US.csv")) %>%
+  obs.d.us <- read_csv(paste0(ts.url, "time_series_covid19_deaths_US.csv")) %>%
     pivot_longer(13:ncol(.), names_to="Date", values_to="deaths") %>%
-    mutate(Date=lubridate::mdy(str_sub(Date, 2, -1L)),
+    mutate(Date=lubridate::mdy(Date),
            State=Province_State) %>%
     group_by(State, Date) %>% summarise(Total=sum(deaths)) %>%
     group_by(State) %>% arrange(State, Date) %>%
@@ -174,9 +174,9 @@ load_obs <- function(ihme_csv="ihme_compiled.csv",
            mn_7d=(Deaths.obs+obs.l1+obs.l2+obs.l3+obs.l4+obs.l5+obs.l6)/7) %>%
     filter(!is.na(mn_7d)) %>% arrange(State, mn_7d) %>% group_by(State) %>% 
     summarise(Date=last(Date), obs=last(mn_7d), pop=first(pop), abbr=first(abbr))
-  obs.c.us <- read.csv(paste0(ts.url, "time_series_covid19_confirmed_US.csv")) %>%
+  obs.c.us <- read_csv(paste0(ts.url, "time_series_covid19_confirmed_US.csv")) %>%
     pivot_longer(13:ncol(.), names_to="Date", values_to="deaths") %>%
-    mutate(Date=lubridate::mdy(str_sub(Date, 2, -1L)),
+    mutate(Date=lubridate::mdy(Date),
            State=Province_State) %>%
     group_by(State, Date) %>% summarise(Total=sum(deaths)) %>%
     group_by(State) %>% arrange(State, Date) %>%
