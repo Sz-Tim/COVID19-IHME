@@ -711,7 +711,7 @@ server <- function(input, output) {
                                                  override.aes=list(size=2))) +
             scale_y_continuous(labels=pretty_numbers, position="right",
                                limits=c(0,NA)) + 
-            scale_x_date(date_labels="%b", date_breaks="1 month") +
+            scale_x_date(date_labels="%b", date_breaks="2 months") +
             facet_wrap(~State, scales=ifelse(input$over.free, "free_y", "fixed")) +
             labs(x="", y="") + 
             theme(axis.text=element_text(size=7.5, angle=330, hjust=0, vjust=0),
@@ -845,7 +845,7 @@ server <- function(input, output) {
                                                  override.aes=list(size=2))) +
             scale_y_continuous(labels=pretty_numbers, position="right",
                                limits=c(0,NA)) + 
-            scale_x_date(date_labels="%b", date_breaks="1 month") +
+            scale_x_date(date_labels="%b", date_breaks="2 months") +
             facet_wrap(~Country, scales=ifelse(input$over.free.gl, 
                                              "free_y", "fixed")) +
             labs(x="", y="") + 
