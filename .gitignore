@@ -3,7 +3,8 @@
 .Rapp.history
 *.Rproj
 .DS_Store
-mods/*/*.pdf
+
+mods/
 rsconnect/*
 
 # Session Data files
