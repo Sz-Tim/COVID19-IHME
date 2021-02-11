@@ -9,6 +9,7 @@ rsconnect/*
 
 # Session Data files
 .RData
+ihme_compiled.csv
 
 # User-specific files
 .Ruserdata
